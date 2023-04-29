@@ -150,7 +150,8 @@ class Weight {
     public function __construct($db){
         $this->db = $db;
     }
-    public function addDecimal($weight){
+    public function addDecimal($lbs){
+        $weight = round($lbs, 1);
         if(strpos($weight, ".") === false){
             return $weight.".0";
         }elseif($weight[0] == "."){

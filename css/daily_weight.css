@@ -45,6 +45,28 @@ input[type=number] {
     width: 195px;
     border-radius: 10px;
 }
+
+/* input error css */
+div span {
+    display: none;
+}
+.input-error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+.input-error .input-container {
+    border: 1px solid transparent;
+    outline: 2px solid red;
+}
+.input-error span {
+    display: block;
+}
+.error-msg {
+    color: red;
+}
 #weight {
     background-color: #dddddd;
     width: 59%;

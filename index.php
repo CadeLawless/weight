@@ -16,14 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         header("Location: index.php");
     }
 }
-if(isset($_GET["pageno"])){
-    echo "
-    <script>
-        window.addEventListener('load', function(){
-            document.querySelector('#weight-history-title').scrollIntoView();
-        });
-    </script>";
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -41,9 +33,12 @@ if(isset($_GET["pageno"])){
         <div>
             <h1 align="center">Daily Weight</h1>
             <form id="weight-form" method="post" action="" class="flex-form">
-                <div class="input-container">
-                    <input type="text" id="weight" name="weight">
-                    <div id="label-after">lbs</div>
+                <div>
+                    <div class="input-container">
+                        <input type="text" required maxlength="5" pattern="\d*\.?\d*" id="weight" name="weight">
+                        <div id="label-after">lbs</div>
+                    </div>
+                    <span class="error-msg">Weight must only contain numbers and up to 1 decimal</span>
                 </div>
                 <div id="error" style="display: none">
                     <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
@@ -62,52 +57,42 @@ if(isset($_GET["pageno"])){
 <script src="submit-button.js"></script>
 <script>
     let weightInput = document.querySelector("#weight");
-    weightInput.addEventListener("keydown", function(e){
-        let k = e.key;
-        if(k == "Enter"){
-            document.querySelector("#submit-button").click();
-        }
-        if(weightInput.value.length >= 5 && (k != 'Backspace' && k != "Delete")){
-            e.preventDefault();
-        }
-        let allowedChars = [
-            "Backspace",
-            "Delete",
-            "Control",
-            "Tab"
-        ];
-        if(k == ".") {
-            //Check if the text already contains the . character
-            if(weightInput.value.includes(".")) {
-                e.preventDefault();
-            }
+    weightInput.addEventListener("keyup", function(e){
+        if(weightInput.validity.patternMismatch){
+            document.querySelector('#error').style.display = "block";
+            document.querySelector('#error p').innerHTML = "Weight must only contain numbers and up to 1 decimal";
         }else{
-            if(!allowedChars.includes(k)){
-                let regex = /\D/g;
-                if(regex.test(k)){
-                    e.preventDefault();
-                }
-            }
+            document.querySelector('#error').style.display = "none";
         }
     });
 
+    weightInput.addEventListener("keydown", function(e){
+        if(e.key == "Enter"){
+            e.preventDefault();
+            document.querySelector("#submit-button").click();
+        }
+    });
+    window.addEventListener("load", function(){
     <?php
     if(!isset($_GET["pageno"])){
-        echo '
-        window.addEventListener("load", function(){
-            document.getElementById("weight").focus();
-        });';
+        echo 'document.getElementById("weight").focus();';
+    }else{
+        echo "document.querySelector('#weight-history-title').scrollIntoView();";
     }
     ?>
+    });
 
     function submitForm(){
-        let weight = document.querySelector("#weight").value;
+        let weight = weightInput.value;
         weight = weight.trim();
         if(weight.length > 0){
-            setTimeout(function(){document.querySelector('#weight-form').submit();}, 1000);
+            if(!weightInput.validity.patternMismatch){
+                setTimeout(function(){document.querySelector('#weight-form').submit();}, 1000);
+            }
         }else{
             console.log(weight);
             document.querySelector('#error').style.display = "block";
+            document.querySelector('#error p').innerHTML = "Oops! You forgot to fill out this field.<br>(There is only one, silly)";
             document.querySelector('#submit-button').style.backgroundColor = 'red';
             setTimeout(function(){
                 document.querySelector('.button').style.backgroundColor = '';
