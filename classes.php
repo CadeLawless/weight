@@ -27,7 +27,8 @@ class Pagination {
         $selectQuery = $db->query("$query LIMIT $offset, $itemsPerPage");
         if($selectQuery->num_rows > 0){
             echo "
-            <div class='vertical-line'></div>
+            <div class='horizontal-line'></div>
+            <div class='flex flex-row'>
             <div>
             <div class='body-fat-percentage'>
                 <a class='body-fat-button' onClick='showPopup()'>Calculate Body Fat Percentage</a>
@@ -71,9 +72,8 @@ class Pagination {
                     </form>
                 </div>
             </div>
-
-            <h2 id='weight-history-title' align='center'>Weight History</h2>
             <div class='history'>
+                <h2 id='weight-history-title' align='center'>Weight History</h2>
                 <table>
                     <thead>
                         <tr>
@@ -139,6 +139,7 @@ class Pagination {
             }
             echo "
                 </div>
+            </div>
             </div>
             </div>
             </div>";

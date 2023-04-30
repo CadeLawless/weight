@@ -122,6 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         }
     }
     function slideIn(){
+        document.querySelector(".running").style.display = "block";
         document.querySelector(".running img").classList.add("slide-in");
+        setTimeout(function(){
+            document.querySelector(".running").style.display = "none";
+        }, 2500);
     }
 </script>
