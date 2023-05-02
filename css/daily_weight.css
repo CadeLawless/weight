@@ -12,12 +12,13 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    flex-wrap: wrap;
     align-items: center;
     gap: 50px;
 }
 .flex-row {
     flex-direction: row;
-    gap: 10px;
+    gap: 40px;
 }
 .flex-form {
     display: flex;
@@ -31,6 +32,9 @@ h1 {
 }
 h2 {
     font-size: 30px;
+}
+h3 {
+    margin: 0;
 }
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
@@ -48,27 +52,6 @@ input[type=number] {
     border-radius: 10px;
 }
 
-/* input error css */
-div span {
-    display: none;
-}
-.input-error {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-}
-.input-error .input-container {
-    border: 1px solid transparent;
-    outline: 2px solid red;
-}
-.input-error span {
-    display: block;
-}
-.error-msg {
-    color: red;
-}
 #weight {
     background-color: #dddddd;
     width: 59%;
@@ -94,6 +77,43 @@ div span {
     color: white;
     cursor: pointer;
     border-radius: 30px;
+}
+.button-wrapper {
+    position: relative;
+}
+.button-wrapper canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+.hr {
+    color: white;
+    width: 85%;
+    border-bottom: 2px solid white;
+    margin: 3px auto;
+}
+.average-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+    width: 150px;
+    height: 150px;
+    color: white;
+    border-radius: 50%;
+    background: dodgerblue;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.5s;
+}
+.average-container:hover {
+    background: #ff7300;
+}
+.average {
+    display: none;
 }
 /* popup flex container */
 .flex-popup {
@@ -248,6 +268,7 @@ tbody tr:last-of-type {
 }
 #error {
     position: relative;
+    width: 85%;
     padding: 10px;
     border-radius: 15px;
     border: solid 2px #960000;

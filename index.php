@@ -17,6 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     }
 }
 ?>
+<script>
+    window.addEventListener("load", function(){
+    <?php
+    if(!isset($_GET["pageno"])){
+        echo 'document.getElementById("weight").focus();';
+    }else{
+        echo "document.querySelector('#weight-history-title').scrollIntoView();";
+    }
+    ?>
+    });
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     <link rel="stylesheet" type="text/css" href="css/daily_weight.css" />
     <link rel="stylesheet" type="text/css" href="css/info-banner.css" />
     <link rel="stylesheet" type="text/css" href="css/submit-button.css" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <title>Daily Weight</title>
 </head>
 <body>
@@ -35,10 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             <form id="weight-form" method="post" action="" class="flex-form">
                 <div>
                     <div class="input-container">
-                        <input type="text" required maxlength="5" pattern="\d*\.?\d*" id="weight" name="weight">
+                        <input type="text" inputmode="decimal" required maxlength="5" pattern="\d*\.?\d*" id="weight" name="weight">
                         <div id="label-after">lbs</div>
                     </div>
-                    <span class="error-msg">Weight must only contain numbers and up to 1 decimal</span>
                 </div>
                 <div id="error" style="display: none">
                     <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
@@ -72,15 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             document.querySelector("#submit-button").click();
         }
     });
-    window.addEventListener("load", function(){
-    <?php
-    if(!isset($_GET["pageno"])){
-        echo 'document.getElementById("weight").focus();';
-    }else{
-        echo "document.querySelector('#weight-history-title').scrollIntoView();";
-    }
-    ?>
-    });
 
     function submitForm(){
         let weight = weightInput.value;
@@ -88,6 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         if(weight.length > 0){
             if(!weightInput.validity.patternMismatch){
                 setTimeout(function(){document.querySelector('#weight-form').submit();}, 1000);
+            }else{
+                document.querySelector('#submit-button').style.backgroundColor = 'red';
+                setTimeout(function(){
+                    document.querySelector('.button').style.backgroundColor = '';
+                    document.querySelector('.button').classList.toggle('button__circle');
+                    document.querySelector('.tick').innerHTML = "Submit";
+                }, 1000);
             }
         }else{
             console.log(weight);
@@ -97,7 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             setTimeout(function(){
                 document.querySelector('.button').style.backgroundColor = '';
                 document.querySelector('.button').classList.toggle('button__circle');
-                document.querySelector('.tick').innerHTML = "Submit";}, 1000);
+                document.querySelector('.tick').innerHTML = "Submit";
+            }, 1000);
         }
     }
     function showPopup(){
@@ -128,4 +138,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             document.querySelector(".running").style.display = "none";
         }, 2500);
     }
+    document.querySelector(".average-container").addEventListener("click", function(){ 
+        document.querySelector(".hr").style.display = "block"; 
+        document.querySelector(".average").style.display = "block";
+        document.querySelector(".average-container").style.backgroundColor = "#ff7300";
+        document.querySelector(".average-container").style.outline = "4px solid dodgerblue";
+        document.querySelector(".average-container").style.border = "2px solid white";
+    });
+    document.querySelector(".confetti-button").addEventListener("click", () => {
+        document.querySelector(".confetti-button").style.pointerEvents = "none";
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ["#1e90ff", "#ff7300"]
+        });
+    });
 </script>
