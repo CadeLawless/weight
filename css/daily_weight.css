@@ -1,7 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@100&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@100;200;300;400;500;600&family=Inconsolata:wght@300&display=swap');
 * {
     font-family: "Heebo";
-    font-weight: bold;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
 }
 body {
     padding: 0;
@@ -15,6 +16,15 @@ body {
     flex-wrap: wrap;
     align-items: center;
     gap: 50px;
+}
+.desktop-flex-row {
+    flex-direction: row;
+    gap: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
 }
 .flex-row {
     flex-direction: row;
@@ -81,6 +91,9 @@ input[type=number] {
 .button-wrapper {
     position: relative;
 }
+.mobile-button-wrapper {
+    display: none;
+}
 .button-wrapper canvas {
     position: absolute;
     top: 50%;
@@ -102,15 +115,23 @@ input[type=number] {
     gap: 5px;
     width: 150px;
     height: 150px;
+    margin-bottom: 20px;
     color: white;
     border-radius: 50%;
     background: dodgerblue;
     text-align: center;
     cursor: pointer;
     transition: background-color 0.5s;
+    background-color: rgb(255, 115, 0);
+    outline: dodgerblue solid 4px;
+    border: 2px solid white;
 }
 .average-container:hover {
     background: #ff7300;
+}
+.confetti-button {
+    background-color: dodgerblue;
+    outline-color: #ff7300;
 }
 .average {
     display: none;
@@ -136,7 +157,9 @@ input[type=number] {
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     background-color: white;
     padding: 35px;
-    width: 20%;
+    width: 30%;
+    border: 4px solid black;
+    border-radius: 5px
 }
 /* close button CSS */
 .close {
@@ -147,10 +170,8 @@ input[type=number] {
 }
 .close:hover{
     cursor: pointer;
-    content: url("images/close-hover.png");
 }
 .close:active{
-    content: url("images/close-hover.png");
     top: 9px;
 }
 #label-after {
@@ -246,6 +267,7 @@ table {
     width: 100%;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
 }
 thead tr {
     background-color: dodgerblue;
@@ -257,6 +279,22 @@ th, td {
 }
 tbody tr {
     border-bottom: 1px solid #dddddd;
+    position: relative;
+    left: 0;
+    transition: left 0.5s;
+}
+td.delete {
+    position: absolute;
+    padding: 0;
+    right: -70px;
+}
+.delete-button {
+    display: inline-block;
+    width: 40px;
+    padding: 12px 15px;
+    background-color: red;
+    color: white;
+    text-decoration: none;
 }
 
 tbody tr:nth-of-type(even) {
@@ -288,21 +326,65 @@ tbody tr:last-of-type {
     0% { opacity: 0; bottom: -100px; }
     100% { opacity: 1; bottom: 0; }
 }
-.running {
+.body-fat-result-container {
     position: relative;
     overflow: hidden;
+    width: 90%;
     height: 130px;
-    width: 100%;
-    display: none;
+    display: flex;
+    margin: auto;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
 }
-.running img {
+.body-fat-result-container h3 {
+    background-color: dodgerblue;
+    color: white;
+    border: 2px solid white;
+    outline: 4px solid #ff7300;
+    border-radius: 30px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.5s;
+    margin: 10px;
+    text-align: center;
+}
+.body-fat-result-container h3:hover {
+    background-color: #ff7300;
+}
+.body-fat-result {
+    color: white;
+    font-weight: 500;
+    width: 65%;
+    margin: 10px;
+    border: 2px solid white;
+    border-radius: 15px;
+    outline: 4px solid #ff7300;
+    padding: 10px;
+    background-color: dodgerblue;
+    justify-content: center;
+    align-items: center;
+}
+.body-fat-result label {
+    font-weight: 300;
+}
+.running-img-container {
+    width: calc(100% + 100px);
     position: absolute;
     left: -100px;
-    width: 100px;
+    top: 0px;
+    pointer-events: none;
+}
+.running-img-container img {
+    width: 100px;    
 }
 .slide-in {
-    -webkit-animation: slide 3s forwards;
-    animation: slide 3s forwards;
+    -webkit-animation: slide 2.2s forwards;
+    animation: slide 2.2s forwards;
+    background-color: white;
+}
+.swipe {
+    left: -70px;
 }
 @-webkit-keyframes slide {
     100% { left: 100%; }
@@ -311,11 +393,26 @@ tbody tr:last-of-type {
 @keyframes slide {
     100% { left: 100%; }
 }
+@keyframes swipe {
+    100% { left: -70px; }
+}
 @media (max-width: 880px){
     table {
         min-width: 300px;
     }
     .popup {
         width: 50%;
+    }
+}
+@media (max-width: 601px){
+    .desktop-button-wrapper {
+        display: none;
+    }
+    .mobile-button-wrapper {
+        display: block;
+    }
+    .slide-in {
+        -webkit-animation: slide 1.8s forwards;
+        animation: slide 1.8s forwards;
     }
 }

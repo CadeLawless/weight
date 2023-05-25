@@ -22,14 +22,14 @@ class DB{
     }
 }
 class Pagination {
-    public static function paginate($db, $query, $itemsPerPage, $pageNumber){
+    public static function paginate($db, $query, $itemsPerPage, $pageNumber, $bodyFatDiv){
         $offset = ($pageNumber - 1) * $itemsPerPage;
         $selectQuery = $db->query("$query LIMIT $offset, $itemsPerPage");
         if($selectQuery->num_rows > 0){
             echo "
             <div class='horizontal-line'></div>
             <div class='flex flex-row'>
-            <div class='button-wrapper'>
+            <div class='button-wrapper mobile-button-wrapper'>
                 <div class='average-container confetti-button'>
                     <div>
                         <h3 id='average-title'>This Week's Average</h3>
@@ -42,7 +42,7 @@ class Pagination {
                     if($findAverage->num_rows > 0){
                         while($row = $findAverage->fetch_assoc()){
                             $lbs = $row["pounds"];
-                            $totalWeight += $lbs;
+                            $totalWeight += floatval($lbs);
                             $totalRecords += 1;
                         }
                         $average = $totalWeight / $totalRecords;
@@ -62,7 +62,7 @@ class Pagination {
                     if($findLastAverage->num_rows > 0){
                         while($row = $findLastAverage->fetch_assoc()){
                             $lastLbs = $row["pounds"];
-                            $lastTotalWeight += $lastLbs;
+                            $lastTotalWeight += floatval($lastLbs);
                             $lastTotalRecords += 1;
                         }
                         $lastAverage = $lastTotalWeight / $lastTotalRecords;
@@ -74,11 +74,9 @@ class Pagination {
                 <div>
                 <div class='body-fat-percentage'>
                     <a class='body-fat-button' onClick='showPopup()'>Calculate Body Fat Percentage</a>
-                </div>
-                <button onclick='slideIn()'>Click Me</button>
-                <div class='running'>
-                    <img src='images/running-stickman.gif'>
-                </div>
+                </div>";
+                if($bodyFatDiv != "") echo $bodyFatDiv;
+                echo "
                 <div class = 'flex-popup'>
                     <div class = 'popup' id='body-fat-popup'>
                         <img onclick='closePopup()' src='images/close.png' class='close'>
@@ -89,30 +87,74 @@ class Pagination {
                                 <option selected disabled>Select an option</option>
                                 <option value='male'>Male</option>
                                 <option value='female'>Female</option>
-                            </select><br>
+                            </select><br><br>
                             <div id='restOfForm' style='display: none'>
                                 <label>Age: <br></label>
-                                <input type='number' name='age' step='any'><br>
+                                <input type='text' inputmode='numeric' name='age' step='any'><br><br>
                                 <label>Weight: <br></label>
-                                <input onkeypress='return isNumberKey(this, event)' onkeydown=\"if(this.value.length >= 5 && event.code != 'Backspace') return false;\" type='number' name='body-fat-weight' step='any'> <span>lbs</span><br>
+                                <input type='text' inputmode='decimal' name='body-fat-weight'> <span>lbs</span><br><br>
                                 <label>Thigh: <br></label>
-                                <input type='number' step='any' name='thigh'> <span>mm</span><br>
+                                <input type='text' inputmode='decimal' name='thigh'> <span>mm</span><br><br>
                                 <div id='male' style='display: none'>
                                     <label>Chest: <br></label>
-                                    <input type='number' step='any' name='chest'> <span>mm</span><br>
+                                    <input type='text' inputmode='decimal' name='chest'> <span>mm</span><br><br>
                                     <label>Abdomen: <br></label>
-                                    <input type='number' step='any' name='abdomen'> <span>mm</span><br>
+                                    <input type='text' inputmode='decimal' name='abdomen'> <span>mm</span><br><br>
                                 </div>
                                 <div id='female' style='display: none'>
                                     <label>Triceps: <br></label>
-                                    <input type='number' step='any' name='triceps'> <span>mm</span><br>
+                                    <input type='text' inputmode='decimal' name='triceps'> <span>mm</span><br><br>
                                     <label>Suprailiac: <br></label>
-                                    <input type='number' step='any' name='suprailiac'> <span>mm</span><br>
+                                    <input type='text' inputmode='decimal' name='suprailiac'> <span>mm</span><br><br>
                                 </div>
                                 <p align='center'><input type='submit' id='body-fat-submit' name='body-fat-submit' value='Calculate'></p>
                             </div>
                         </form>
                     </div>
+                </div>
+                <div class='desktop-flex-row'>
+                <div class='button-wrapper desktop-button-wrapper'>
+                <div class='average-container confetti-button'>
+                    <div>
+                        <h3 id='average-title'>This Week's Average</h3>
+                        <div class='hr' style='display: none'></div>
+                    </div>
+                    <div class='average'>";
+                    $totalWeight = 0;
+                    $totalRecords = 0;
+                    $findAverage = $db->query("$query LIMIT 7");
+                    if($findAverage->num_rows > 0){
+                        while($row = $findAverage->fetch_assoc()){
+                            $lbs = $row["pounds"];
+                            $totalWeight += floatval($lbs);
+                            $totalRecords += 1;
+                        }
+                        $average = $totalWeight / $totalRecords;
+                        echo "<h3>" . round($average, 1) . " lbs</h3>";
+                    }
+                    echo "
+                    </div>
+                </div>
+                <div class='average-container' style='background-color: #ff7300'>
+                    <div>
+                        <h3 id='average-title'>Last Week's Average</h3>
+                        <div class='hr'></div>
+                    </div>";
+                    $lastTotalWeight = 0;
+                    $lastTotalRecords = 0;
+                    $findLastAverage = $db->query("$query LIMIT 7, 7");
+                    if($findLastAverage->num_rows > 0){
+                        while($row = $findLastAverage->fetch_assoc()){
+                            $lastLbs = $row["pounds"];
+                            $lastTotalWeight += floatval($lastLbs)
+                            ;
+                            $lastTotalRecords += 1;
+                        }
+                        $lastAverage = $lastTotalWeight / $lastTotalRecords;
+                        echo "<h3>" . round($lastAverage, 1) . " lbs</h3>";
+                    }
+                    echo "
+                </div>
                 </div>
                 <div class='history'>
                     <h2 id='weight-history-title' align='center'>Weight History</h2>
@@ -121,19 +163,21 @@ class Pagination {
                             <tr>
                                 <th class='th_border'>Date Weighed</th>
                                 <th>Weight</th>
+                                <td></td>
                             </tr>
                         </thead>
                         <tbody>
                 ";
                 while($row=$selectQuery->fetch_assoc()){
-                    $dateWeighed = $row["date_weighed"];
-                    $dateWeighed = date_create($dateWeighed);
-                    $dateWeighed = date_format($dateWeighed, "m/d/y");
-                    $weight = $row["pounds"];
+                    $dateWeighed = htmlspecialchars(date("m/d/y", strtotime($row["date_weighed"])));
+                    $weight = htmlspecialchars($row["pounds"]);
+                    $id = htmlspecialchars($row["id"]);
                     echo "
                         <tr>
                             <td>$dateWeighed</td>
                             <td>$weight lbs</td>
+                            <td><img class='delete-icon' onclick='swipe.call(this)' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
+                            <td class='delete'><a href='delete.php?id=$id' class='delete-button'>Delete</a></td>
                         </tr>
                     ";
                 }
@@ -158,12 +202,12 @@ class Pagination {
                     echo "<ul class=\"pagination\">
                         <li class='";
                         if($pageNumber <= 1) echo 'disabled';
-                        echo "'><a href=\"?pageno=1"."\"><img onClick='if(this.parentElement.parentElement.className == \"disabled\") return false;' class='first' src='images/first.png' style='width: 25px; height: 25px;'></a></li>
+                        echo "'><a href=\"?pageno=1#weight-history-title"."\"><img onClick='if(this.parentElement.parentElement.className == \"disabled\") return false;' class='first' src='images/first.png' style='width: 25px; height: 25px;'></a></li>
                         <li class=";
                         if($pageNumber <= 1) echo 'disabled';
                         echo ">
                             <a href='";
-                            if($pageNumber <= 1){echo "#'";} else { echo "?pageno=".($pageNumber - 1); }
+                            if($pageNumber <= 1){echo "#'";} else { echo "?pageno=".($pageNumber - 1)."#weight-history-title"; }
                             echo "'><img onClick='if(this.parentElement.parentElement.className == \"disabled\") return false;' class='prev' src='images/prev.png' style='width: 25px; height: 25px;'></a>
                         </li>
                         <li style='font-size: 14px; cursor: default; margin-bottom: 5px;'><strong style='font-size: 18px'>$pageNumber/$totalPages</strong></li>
@@ -171,16 +215,17 @@ class Pagination {
                         if($pageNumber >= $totalPages) echo "disabled";
                         echo ">
                             <a href='";
-                            if($pageNumber >= $totalPages){ echo '#\''; } else { echo "?pageno=".($pageNumber + 1); }
+                            if($pageNumber >= $totalPages){ echo '#\''; } else { echo "?pageno=".($pageNumber + 1)."#weight-history-title"; }
                             echo "'><img onClick='if(this.parentElement.parentElement.className == \"disabled\") return false;' class='next' src='images/prev.png' style='width: 25px; height: 25px;'></a>
                         </li>
                         <li class='";
                         if($pageNumber == $totalPages) echo 'disabled';
-                        echo "'><a href=\"?pageno=$totalPages"."\"><img onClick='if(this.parentElement.parentElement.className == \"disabled\") return false;' class='last' src='images/first.png' style='width: 25px; height: 25px;'></a></li>
+                        echo "'><a href=\"?pageno=$totalPages#weight-history-title"."\"><img onClick='if(this.parentElement.parentElement.className == \"disabled\") return false;' class='last' src='images/first.png' style='width: 25px; height: 25px;'></a></li>
                     </ul>";
                 }
                 echo "
                     </div>
+                </div>
                 </div>
                 </div>    
             </div>
@@ -218,13 +263,13 @@ class Weight {
         $updateWeight->bind_param("ssi", $weight, $date, $id);
         return($updateWeight->execute());
     }
-    public function display_weight(){
+    public function display_weight($bodyFatDiv){
         if(isset($_GET["pageno"])){
             $pageno = $_GET["pageno"];
         }else{
             $pageno = 1;
         }
-        Pagination::paginate($this->db, "SELECT * FROM daily_weight ORDER BY date_weighed DESC", 7, $pageno);
+        Pagination::paginate($this->db, "SELECT * FROM daily_weight ORDER BY date_weighed DESC", 7, $pageno, $bodyFatDiv);
     }
 }
 ?>

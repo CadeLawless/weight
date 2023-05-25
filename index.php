@@ -1,33 +1,86 @@
 <?php
-//ini_set('display_errors', 'On');
+ini_set('display_errors', 'On');
 require "classes.php";
 $db = new DB();
 $weight = new Weight($db);
 
+// initialize form field variables
+$getWeight = "";
+$gender = "";
+$age = "";
+$bodyFatWeight = "";
+$thigh = "";
+$chest = "";
+$abdomen = "";
+$triceps = "";
+$suprailiac = "";
+$bodyFatDiv = "";
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
-    if(isset($_POST["weight"])){
-        $getWeight = trim($_POST["weight"]);
-        $getWeight = $weight->addDecimal($getWeight);
-    }
-    $dateEntered = date("Y-m-d");
-    if(!$weight->insert_weight($getWeight, $dateEntered)){
-        echo "<script>alert(`Weight could not be saved.`);</script>";
+    if(isset($_POST["body-fat-submit"])){
+        $gender = trim($_POST["gender"]);
+        $age = trim($_POST["age"]);
+        $bodyFatWeight = trim($_POST["body-fat-weight"]);
+        $thigh = trim($_POST["thigh"]);
+        $chest = trim($_POST["chest"]);
+        $abdomen = trim($_POST["abdomen"]);
+        $triceps = trim($_POST["triceps"]);
+        $suprailiac = trim($_POST["suprailiac"]);
+
+        /*
+        For females:
+
+        D = (1.0994921 - (0.0009929 x (Triceps + Thigh + Suprailiac)) + (0.0000023 x (Triceps + Thigh + Suprailiac)2) - (0.0001392 x Age))
+
+        For males:
+
+        D = (1.10938 - (0.0008267 x (Thigh + Chest + Abdomen)) + (0.0000016 x (Thigh + Chest + Abdomen)2) - (0.000257 x Age))
+
+        Body density is transformed in fat percentage with the SIRI formula:
+
+        BF% = 495/ D - 450
+
+        Body fat is obtained from the BF% and subject weight based on:
+
+        Body fat mass = BF% x Weight / 100
+
+        Lean body mass = Weight – Body fat mass
+        */
+
+        if($gender == "male"){
+            $density = (1.10938 - (0.0008267 * ($thigh + $chest + $abdomen)) + (0.0000016 * pow(($thigh + $chest + $abdomen), 2)) - (0.000257 * $age));
+        }else{
+            $density = (1.0994921 - (0.0009929 * ($triceps + $thigh + $suprailiac)) + (0.0000023 * pow(($triceps + $thigh + $suprailiac), 2)) - (0.0001392 * $age));
+        }
+        $bodyFatPercentage = round((495 / $density - 450), 1);
+        $bodyFatMass = round(($bodyFatPercentage * $bodyFatWeight / 100), 1);
+        $leanBodyMass = round(($bodyFatWeight - $bodyFatMass), 1);
+        $bodyFatDiv = "
+        <div class='body-fat-result-container'>
+            <h3 onclick='slideIn(); this.style.display = \"none\";'>Click here to reveal your Body Fat Percentage</h3>
+            <div style='display: none' class='body-fat-result'>
+                <div>
+                    <label>Body Fat Percentage: </label>$bodyFatPercentage%<br>
+                    <label>Body Fat Mass: </label>$bodyFatMass lbs<br>
+                    <label>Lean Body Mass: </label>$leanBodyMass lbs
+                </div>
+            </div>
+            <div class='running-img-container'>
+                <img src='images/running-stickman.gif'>
+            </div>
+        </div>";
     }else{
-        header("Location: index.php");
+        if(isset($_POST["weight"])){
+            $getWeight = trim($_POST["weight"]);
+            $getWeight = $weight->addDecimal($getWeight);
+        }
+        $dateEntered = date("Y-m-d");
+        if(!$weight->insert_weight($getWeight, $dateEntered)){
+            echo "<script>alert(`Weight could not be saved.`);</script>";
+        }    
     }
 }
 ?>
-<script>
-    window.addEventListener("load", function(){
-    <?php
-    if(!isset($_GET["pageno"])){
-        echo 'document.getElementById("weight").focus();';
-    }else{
-        echo "document.querySelector('#weight-history-title').scrollIntoView();";
-    }
-    ?>
-    });
-</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,7 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
                 </div>
             </form>
         </div>
-        <?php $weight->display_weight();?>
+        <?php 
+        $weight->display_weight($bodyFatDiv);?>
     </div>
 </body>
 </html>
@@ -110,6 +164,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
             }, 1000);
         }
     }
+    window.addEventListener("load", function(){
+    <?php
+    if(!isset($_GET["pageno"])){
+        echo 'document.getElementById("weight").focus();';
+    }
+    ?>
+    });
     function showPopup(){
         let popup = document.getElementById("body-fat-popup");
         popup.style.display = "block";
@@ -127,31 +188,54 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         document.getElementById(this.value).style.display = "block";
         if(this.value == "male"){
             document.querySelector("#female").style.display = "none";
+            for(const input of document.querySelectorAll("#male input")){
+                input.setAttribute("required", "");
+            }
+            for(const input of document.querySelectorAll("#female input")){
+                if(input.hasAttribute("required")){
+                    input.removeAttribute("required");
+                }
+            }
         }else{
             document.querySelector("#male").style.display = "none";
+            for(const input of document.querySelectorAll("#female input")){
+                input.setAttribute("required", "");
+            }
+            for(const input of document.querySelectorAll("#male input")){
+                if(input.hasAttribute("required")){
+                    input.removeAttribute("required");
+                }
+            }
         }
     }
     function slideIn(){
-        document.querySelector(".running").style.display = "block";
-        document.querySelector(".running img").classList.add("slide-in");
-        setTimeout(function(){
-            document.querySelector(".running").style.display = "none";
-        }, 2500);
+        document.querySelector(".running-img-container").classList.add("slide-in");
+        document.querySelector(".body-fat-result").style.display = "flex";
+    }
+    function swipe(){
+            this.parentElement.parentElement.classList.toggle("swipe");
     }
     document.querySelector(".average-container").addEventListener("click", function(){ 
-        document.querySelector(".hr").style.display = "block"; 
-        document.querySelector(".average").style.display = "block";
-        document.querySelector(".average-container").style.backgroundColor = "#ff7300";
-        document.querySelector(".average-container").style.outline = "4px solid dodgerblue";
-        document.querySelector(".average-container").style.border = "2px solid white";
+        
     });
-    document.querySelector(".confetti-button").addEventListener("click", () => {
-        document.querySelector(".confetti-button").style.pointerEvents = "none";
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ["#1e90ff", "#ff7300"]
+    for(const button of document.querySelectorAll(".confetti-button")){
+        button.addEventListener("click", () => {
+            button.style.pointerEvents = "none";
+            for(const hr of document.querySelectorAll(".hr")){
+                hr.style.display = "block"; 
+            }
+            for(const average of document.querySelectorAll(".average")){
+                average.style.display = "block";
+            }
+            button.style.backgroundColor = "#ff7300";
+            button.style.outline = "4px solid dodgerblue";
+            button.style.border = "2px solid white";
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ["#1e90ff", "#ff7300"]
+            });
         });
-    });
+    }
 </script>
