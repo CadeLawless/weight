@@ -4,6 +4,7 @@
     align-items: center;
     font-family: sans-serif;
     font-weight: normal !important;
+    position: relative;
   }
 .button {
     width: 300px;
@@ -34,4 +35,8 @@
     color: white;
     font-size: 2em;
     transition: all .9s;
+}
+#weight-submit {
+    position: absolute;
+    visibility: hidden;
 }

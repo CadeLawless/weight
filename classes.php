@@ -176,7 +176,7 @@ class Pagination {
                         <tr>
                             <td>$dateWeighed</td>
                             <td>$weight lbs</td>
-                            <td><img class='delete-icon' onclick='swipe.call(this)' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
+                            <td><img class='delete-icon' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
                             <td class='delete'><a href='delete.php?id=$id' class='delete-button'>Delete</a></td>
                         </tr>
                     ";
@@ -242,7 +242,7 @@ class Weight {
         $this->db = $db;
     }
     public function addDecimal($lbs){
-        $weight = round($lbs, 1);
+        $weight = (string) round($lbs, 1);
         if(strpos($weight, ".") === false){
             return $weight.".0";
         }elseif($weight[0] == "."){
@@ -261,6 +261,11 @@ class Weight {
     public function update_weight($weight, $date, $id){
         $updateWeight = $this->db->getConnection()->prepare("UPDATE daily_weight SET pounds = ?, date_weighed = ? WHERE id = ?");
         $updateWeight->bind_param("ssi", $weight, $date, $id);
+        return($updateWeight->execute());
+    }
+    public function delete_weight($id){
+        $updateWeight = $this->db->getConnection()->prepare("DELETE FROM daily_weight WHERE id = ?");
+        $updateWeight->bind_param("i", $id);
         return($updateWeight->execute());
     }
     public function display_weight($bodyFatDiv){
