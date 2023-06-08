@@ -17,14 +17,31 @@ $suprailiac = "";
 $bodyFatDiv = "";
 
 if (isset($_POST["weight-submit"])){
+    $errors = false;
+    $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
+    $errorList = "";
     if(isset($_POST["weight"])){
         $getWeight = trim($_POST["weight"]);
-        $getWeight = $weight->addDecimal($getWeight);
+        if(preg_match("/^\d*\.?\d*$/", $getWeight)){
+            $getWeight = $weight->addDecimal($getWeight);
+        }else{
+            $errors = true;
+            $errorList .= "<li>Weight must only contain numbers and up to 1 decimal</li>";
+        }
+    }else{
+        $errors = true;
+        $errorList .= "<li>Weight is a required field</li>";
     }
     $dateEntered = date("Y-m-d");
-    if(!$weight->insert_weight($getWeight, $dateEntered)){
-        echo "<script>alert(`Weight could not be saved.`);</script>";
-    }    
+    if(!$errors){
+        if(!$weight->insert_weight($getWeight, $dateEntered)){
+            echo "<script>alert(`Weight could not be saved.`);</script>";
+        }else{
+            header("Location: index.php");
+        } 
+    }else{
+        $errorMessage = "<div class='error' style='width: 100%;'>$errorTitle<ul>$errorList</ul></div>";
+    }
 }
 if(isset($_POST["body-fat-submit"])){
     $gender = trim($_POST["gender"]);
@@ -86,27 +103,24 @@ if(isset($_POST["body-fat-submit"])){
     <!-- <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.10.0/tsparticles.confetti.bundle.min.js"></script>
     <title>Daily Weight</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
 </head>
 <body>
     <div class="flex">
         <div>
             <h1 align="center">Daily Weight</h1>
-            <form id="weight-form" method="post" action="" class="flex-form">
+            <form id="daily-weight-form" method="post" action="" class="flex-form">
+                <?php if(isset($errorMessage)) echo $errorMessage?>
                 <div>
                     <div class="input-container">
-                        <input type="text" inputmode="decimal" required maxlength="5" pattern="\d*\.?\d*" id="weight" name="weight">
+                        <input type="text" inputmode="decimal" value="<?php echo $getWeight?>" maxlength="5" id="weight" name="weight">
                         <div id="label-after">lbs</div>
                     </div>
                 </div>
-                <div id="error" style="display: none">
+                <div id="input-error" class="error" style="display: none">
                     <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
                 </div>
-                <div id="submit-button" class="button" onclick="submitForm()">
-                    <div class="container">
-                        <div class="tick"></div>
-                    </div>
-                    <input type="submit" name="weight-submit" id="weight-submit" value="Submit">
-                </div>
+                <input type="submit" name="weight-submit" id="weight-submit" value="Submit">
             </form>
         </div>
         <?php 
@@ -118,47 +132,36 @@ if(isset($_POST["body-fat-submit"])){
 <script>
     let weightInput = document.querySelector("#weight");
     weightInput.addEventListener("keyup", function(e){
-        if(weightInput.validity.patternMismatch){
-            document.querySelector('#error').style.display = "block";
-            document.querySelector('#error p').innerHTML = "Weight must only contain numbers and up to 1 decimal";
+        if(/^\d*\.?\d*$/.test(weightInput.value) === false){
+            document.querySelector('#input-error').style.display = "block";
+            document.querySelector('#input-error p').innerHTML = "Weight must only contain numbers and up to 1 decimal";
         }else{
-            document.querySelector('#error').style.display = "none";
+            document.querySelector('#input-error').style.display = "none";
         }
     });
 
-    weightInput.addEventListener("keydown", function(e){
-        if(e.key == "Enter"){
-            e.preventDefault();
-            document.querySelector("#submit-button").click();
-        }
-    });
-
-    function submitForm(){
+    document.querySelector("#daily-weight-form").addEventListener("submit", function(e){
         let weight = weightInput.value;
         weight = weight.trim();
         if(weight.length > 0){
-            if(!weightInput.validity.patternMismatch){
-                setTimeout(function(){document.querySelector('#weight-submit').click();}, 600);
-            }else{
-                document.querySelector('#submit-button').style.backgroundColor = 'red';
+            if(/^\d*\.?\d*$/.test(weight) === false){
+                e.preventDefault();
+                document.querySelector('#weight-submit').classList.add("shake");
                 setTimeout(function(){
-                    document.querySelector('.button').style.backgroundColor = '';
-                    document.querySelector('.button').classList.toggle('button__circle');
-                    document.querySelector('.tick').innerHTML = "Submit";
+                    document.querySelector('#weight-submit').classList.remove("shake");
                 }, 1000);
             }
         }else{
+            e.preventDefault();
             console.log(weight);
-            document.querySelector('#error').style.display = "block";
-            document.querySelector('#error p').innerHTML = "Oops! You forgot to fill out this field.<br>(There is only one, silly)";
-            document.querySelector('#submit-button').style.backgroundColor = 'red';
+            document.querySelector('#weight-submit').classList.add("shake");
+            document.querySelector('#input-error').style.display = "block";
+            document.querySelector('#input-error p').innerHTML = "Oops! You forgot to fill out this field.<br>(There is only one, silly)";
             setTimeout(function(){
-                document.querySelector('.button').style.backgroundColor = '';
-                document.querySelector('.button').classList.toggle('button__circle');
-                document.querySelector('.tick').innerHTML = "Submit";
+                document.querySelector('#weight-submit').classList.remove("shake");
             }, 1000);
         }
-    }
+    });
     window.addEventListener("load", function(){
     <?php
     if(!isset($_GET["pageno"])){

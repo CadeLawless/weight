@@ -54,10 +54,6 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
 .input-container {
     width: 195px;
     border-radius: 10px;
@@ -94,13 +90,6 @@ input[type=number] {
 }
 .mobile-button-wrapper {
     display: none;
-}
-.button-wrapper canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
 }
 .hr {
     color: white;
@@ -279,9 +268,9 @@ thead tr {
 th, td {
     padding: 12px 15px;
 }
-tbody tr {
+table tbody tr {
     border-bottom: 1px solid #dddddd;
-    position: relative !important;
+    position: relative;
     left: 0;
     transition: left 0.5s;
 }
@@ -309,7 +298,7 @@ tbody tr:nth-of-type(even) {
 tbody tr:last-of-type {
     border-bottom: 2px solid dodgerblue;
 }
-#error {
+.error {
     position: relative;
     width: 85%;
     padding: 10px;
@@ -398,6 +387,32 @@ tbody tr:last-of-type {
 
 @keyframes slide {
     100% { left: 100%; }
+}
+.shake {
+    animation: shake 0.82s cubic-bezier(.36, .07, .19, .97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+  
+@keyframes shake {
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
 }
 @media (max-width: 880px){
     table {
