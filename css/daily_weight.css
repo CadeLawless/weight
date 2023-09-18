@@ -9,6 +9,53 @@ body {
     margin: 0;
     overflow-x: hidden;
 }
+.inline {
+    display: inline;
+}
+.center {
+    text-align: center;
+}
+.right {
+    text-align: right;
+}
+.error-msg {
+    color: red;
+    font-size: 14px;
+    display: block;
+}
+.hidden {
+    display: none;
+}
+.invalid ~ span {
+    display: block;
+}
+.large-input {
+    flex-basis: 100%;
+    width: 100%;
+}
+#user-bar {
+    background-color: dodgerblue;
+    color: white;
+    font-size: 15px;
+    position: fixed;
+    z-index: 1000;
+    box-shadow: 0px 10px 10px -15px #111; 
+}
+#logout {
+    border: none !important;
+    background-color: #ff7300;
+    cursor: pointer;
+    font-size: 15px !important;
+    color: white;
+    padding: 8px;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    outline: none !important;
+    transition: all 0.5s;
+}
+#logout:hover {
+    background-color: #e76800;
+}
 .flex {
     width: 100%;
     display: flex;
@@ -247,37 +294,45 @@ input::-webkit-inner-spin-button {
     width: 95%;
 }
 .history {
-    overflow: visible !important;
+    overflow: hidden;
+}
+#table {
+    margin: 25px 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border-bottom: 2px solid dodgerblue;
 }
 table {
     border-collapse: collapse;
-    margin: 25px 0;
     font-size: 0.9em;
     font-family: sans-serif;
     width: 100%;
     min-width: 400px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     position: relative;
-    overflow: hidden;
 }
 thead tr {
     background-color: dodgerblue;
     color: #ffffff;
     text-align: left;
 }
-th, td {
+td {
+    padding: 2px 5px;
+}
+th {
     padding: 12px 15px;
 }
-table tbody tr {
+.swipe-row {
     border-bottom: 1px solid #dddddd;
     position: relative;
-    left: 0;
+    left: 0px;
     transition: left 0.5s;
 }
 td.delete {
     position: absolute;
     padding: 0;
     right: -70px;
+}
+.delete-icon {
+    padding: 10px;
 }
 .delete-button {
     display: inline-block;
@@ -290,13 +345,8 @@ td.delete {
 .hide {
     display: none;
 }
-
-tbody tr:nth-of-type(even) {
+.swipe-row:nth-of-type(even) tr {
     background-color: #f3f3f3;
-}
-
-tbody tr:last-of-type {
-    border-bottom: 2px solid dodgerblue;
 }
 .error {
     position: relative;
@@ -378,7 +428,6 @@ tbody tr:last-of-type {
     background-color: white;
 }
 .swipe {
-    position: relative !important;
     left: -70px;
 }
 @-webkit-keyframes slide {

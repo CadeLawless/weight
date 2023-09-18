@@ -17,8 +17,39 @@ class DB{
         return $this->connection->query($query);
     }
 
+    public function error(){
+        return $this->connection->error;
+    }
+
     public function getConnection(){
         return $this->connection;
+    }
+
+    // parameterized mysqli select statement
+    public function select($sql, $types, $values){
+        if($selectStatement = $this->connection->prepare($sql)){
+            $selectStatement->bind_param($types, ...$values);
+            $selectStatement->execute();
+            return $selectStatement->get_result();
+        }else{
+            //echo $db->error;
+            return false;
+        }
+    }
+
+    // parameterized mysqli write (insert, update, delete) statement
+    public function write($sql, $types, $values){
+        if($writeStatement = $this->connection->prepare($sql)){
+            $writeStatement->bind_param($types, ...$values);
+            if($writeStatement->execute()){
+                return true;
+            }else{
+                //echo $writeStatement->error;
+                return false;
+            }
+        }else{
+            return false;
+        }
     }
 }
 class Pagination {
@@ -158,33 +189,33 @@ class Pagination {
                 </div>
                 <div class='history'>
                     <h2 id='weight-history-title' align='center'>Weight History</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class='th_border'>Date Weighed</th>
-                                <th>Weight</th>
-                                <td></td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                ";
+                    <div id='table'>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style='width: 40%;'>Date Weighed</th>
+                                    <th>Weight</th>
+                                    <td style='width: 20%;'></td>
+                                </tr>
+                            </thead>
+                        </table>";
                 while($row=$selectQuery->fetch_assoc()){
                     $dateWeighed = htmlspecialchars(date("m/d/y", strtotime($row["date_weighed"])));
                     $weight = htmlspecialchars($row["pounds"]);
                     $id = htmlspecialchars($row["id"]);
                     echo "
-                        <tr>
-                            <td>$dateWeighed</td>
-                            <td>$weight lbs</td>
-                            <td><img class='delete-icon' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
-                            <td class='delete'><a href='delete.php?id=$id' class='delete-button'>Delete</a></td>
-                        </tr>
-                    ";
+                        <table class='swipe-row'>
+                            <tbody>
+                                <tr>
+                                    <td style='width: 40%; padding: 0 15px;'>$dateWeighed</td>
+                                    <td style='padding: 0 15px;'>$weight lbs</td>
+                                    <td style='width: 20%; text-align: center;'><img class='delete-icon' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
+                                    <td class='delete'><a href='delete.php?id=$id' class='delete-button'>Delete</a></td>
+                                </tr>
+                            </tbody>
+                        </table>";
                 }
-                echo "
-                    </tbody>
-                </table>
-                ";
+                echo "</div>";
                 $numberOfItemsOnPage = $selectQuery->num_rows;
                 $numberOfItems = $db->query($query)->num_rows;
                 $totalPages = ceil($numberOfItems / $itemsPerPage);
@@ -254,8 +285,8 @@ class Weight {
         }
     }
     public function insert_weight($weight, $date){
-        $insertWeight = $this->db->getConnection()->prepare("INSERT INTO daily_weight (pounds, date_weighed) VALUES (?, ?)");
-        $insertWeight->bind_param("ss", $weight, $date);
+        $insertWeight = $this->db->getConnection()->prepare("INSERT INTO daily_weight (username, pounds, date_weighed) VALUES (?, ?, ?)");
+        $insertWeight->bind_param("sss", $_SESSION["username"], $weight, $date);
         return($insertWeight->execute());
     }
     public function update_weight($weight, $date, $id){
@@ -274,7 +305,7 @@ class Weight {
         }else{
             $pageno = 1;
         }
-        Pagination::paginate($this->db, "SELECT * FROM daily_weight ORDER BY date_weighed DESC", 7, $pageno, $bodyFatDiv);
+        Pagination::paginate($this->db, "SELECT * FROM daily_weight WHERE username = '{$_SESSION["username"]}' ORDER BY date_weighed DESC", 7, $pageno, $bodyFatDiv);
     }
 }
 ?>

@@ -1,9 +1,51 @@
 <?php
+session_start();
 ini_set('display_errors', 'On');
+
+// database connections
 require "classes.php";
 $db = new DB();
 $weight = new Weight($db);
 
+// check if logged in
+if(!isset($_SESSION["logged_in"])){
+    // check if IP address is associated with a user 
+    $current_ip_address = $_SERVER["REMOTE_ADDR"];
+    $findIPAddresses = $db->query("SELECT username, ip_addresses FROM users");
+    if($findIPAddresses->num_rows > 0){
+        while($row = $findIPAddresses->fetch_assoc()){
+            $ip_addresses = unserialize($row["ip_addresses"]);
+            if(is_array($ip_addresses)){
+                foreach($ip_addresses as $ip){
+                    if($ip["ip_address"] == $current_ip_address){
+                        // check last login, if it has been over a year since last login, make them sign in again
+                        $oneYearAgo = date("Y-m-d H:i:s", strtotime("-1 year"));
+                        $last_login = date("Y-m-d H:i:s", strtotime($ip["last_login"]));
+                        if($last_login < $oneYearAgo){
+                            header("Location: login.php");
+                        }else{
+                            $_SESSION["logged_in"] = true;
+                            $_SESSION["username"] = $row["username"];
+                            $username = $_SESSION["username"];
+                        }
+                    }
+                }
+            }
+        }
+        if(!$_SESSION["logged_in"]){
+            header("Location: login.php");
+        }
+    }else{
+        header("Location: login.php");
+    }
+}else{
+    $username = $_SESSION["username"];
+}
+/* $array = [
+    ["ip_address" => $_SERVER["REMOTE_ADDR"], "last_login", date("Y-m-d H:i:s")]
+];
+echo serialize($array);
+ */
 // initialize form field variables
 $getWeight = "";
 $gender = "";
@@ -32,6 +74,7 @@ if (isset($_POST["weight-submit"])){
         $errors = true;
         $errorList .= "<li>Weight is a required field</li>";
     }
+    date_default_timezone_set("America/Chicago");
     $dateEntered = date("Y-m-d");
     if(!$errors){
         if(!$weight->insert_weight($getWeight, $dateEntered)){
@@ -90,6 +133,30 @@ if(isset($_POST["body-fat-submit"])){
         </div>
     </div>";
 }
+
+// logout
+if(isset($_POST["logout"])){
+    $last_login = strtotime("-1 year");
+    $last_login = date("Y-m-d H:i:s", $last_login);
+    $findUser = $db->select("SELECT ip_addresses FROM users WHERE username = ?", "s", [$username]);
+    if($findUser->num_rows > 0){
+        while($row = $findUser->fetch_assoc()){
+            $ip_addresses = unserialize($row["ip_addresses"]);
+        }
+        foreach($ip_addresses as &$ip){
+            if($ip["ip_address"] == $_SERVER["REMOTE_ADDR"]){
+                $ip["last_login"] = $last_login;
+            }
+        }
+        unset($ip);
+        $ip_addresses = serialize($ip_addresses);
+        if($db->write("UPDATE users SET ip_addresses = ? WHERE username = ?", "ss", [$ip_addresses, $username])){
+            session_unset();
+            session_destroy();
+            header("Location: login.php");
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -106,9 +173,15 @@ if(isset($_POST["body-fat-submit"])){
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
 </head>
 <body>
+    <div class="large-input right" id="user-bar">
+        <p class="inline" style="font-size: 15px; margin-right: 10px;">Howdy, <?php echo $username?></p>
+        <form class="inline" method="POST" action="">
+            <input type="submit" name="logout" value="Logout" id="logout">
+        </form>
+    </div>
     <div class="flex">
         <div>
-            <h1 align="center">Daily Weight</h1>
+            <h1 style="margin-top: 60px;" align="center">Daily Weight</h1>
             <form id="daily-weight-form" method="post" action="" class="flex-form">
                 <?php if(isset($errorMessage)) echo $errorMessage?>
                 <div>
@@ -126,6 +199,7 @@ if(isset($_POST["body-fat-submit"])){
         <?php 
         $weight->display_weight($bodyFatDiv);?>
     </div>
+    <br><br><br>
 </body>
 </html>
 <script src="submit-button.js"></script>
@@ -212,10 +286,8 @@ if(isset($_POST["body-fat-submit"])){
     }
     for(const x of document.querySelectorAll(".delete-icon")){
         x.addEventListener("click", function(){
-            let tr = x.parentElement.parentElement;
+            let tr = x.parentElement.parentElement.parentElement.parentElement;
             tr.classList.toggle("swipe");
-            tr.style.position = "relative";
-            alert("tagname: " + tr.tagName + "\nclassname: " + tr.className + "\nposition: " + getComputedStyle(tr).position);
         });
     }
     for(const button of document.querySelectorAll(".confetti-button")){
