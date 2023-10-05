@@ -133,30 +133,6 @@ if(isset($_POST["body-fat-submit"])){
         </div>
     </div>";
 }
-
-// logout
-if(isset($_POST["logout"])){
-    $last_login = strtotime("-1 year");
-    $last_login = date("Y-m-d H:i:s", $last_login);
-    $findUser = $db->select("SELECT ip_addresses FROM users WHERE username = ?", "s", [$username]);
-    if($findUser->num_rows > 0){
-        while($row = $findUser->fetch_assoc()){
-            $ip_addresses = unserialize($row["ip_addresses"]);
-        }
-        foreach($ip_addresses as &$ip){
-            if($ip["ip_address"] == $_SERVER["REMOTE_ADDR"]){
-                $ip["last_login"] = $last_login;
-            }
-        }
-        unset($ip);
-        $ip_addresses = serialize($ip_addresses);
-        if($db->write("UPDATE users SET ip_addresses = ? WHERE username = ?", "ss", [$ip_addresses, $username])){
-            session_unset();
-            session_destroy();
-            header("Location: login.php");
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -171,17 +147,42 @@ if(isset($_POST["logout"])){
     <script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.10.0/tsparticles.confetti.bundle.min.js"></script>
     <title>Daily Weight</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+
+    <style>
+        @media (max-width: 325px) {
+            #title-overlay {
+                height: 190px;
+            }
+            #title-start {
+                margin-bottom: 0;
+                display: block !important;
+            }
+            #dropdown-title h1 {
+                margin-top: 0;
+                display: inline-block;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="large-input right" id="user-bar">
-        <p class="inline" style="font-size: 15px; margin-right: 10px;">Howdy, <?php echo $username?></p>
-        <form class="inline" method="POST" action="">
-            <input type="submit" name="logout" value="Logout" id="logout">
-        </form>
-    </div>
+    <?php include "includes/nav.php"?>
     <div class="flex">
         <div>
-            <h1 style="margin-top: 60px;" align="center">Daily Weight</h1>
+        <div id="title-overlay"></div>
+            <div id="title-container">
+                <div id="title-top"></div>
+                <h1 id="title-start">Daily </h1>
+                <div id="dropdown-title">
+                    <h1>Weight <span id="down-caret">&#8964;</span></h1>
+                    <ul id="dropdown-title-list" class="hide-dropdown">
+                        <li><a href="measurements.php">Measurements</a></li>
+                        <li><a href="body-fat.php">Body Fat %</a></li>
+                    </ul>
+                </div>
+            </div>
+            <br>
             <form id="daily-weight-form" method="post" action="" class="flex-form">
                 <?php if(isset($errorMessage)) echo $errorMessage?>
                 <div>
@@ -196,8 +197,7 @@ if(isset($_POST["logout"])){
                 <input type="submit" name="weight-submit" id="weight-submit" value="Submit">
             </form>
         </div>
-        <?php 
-        $weight->display_weight($bodyFatDiv);?>
+        <?php $weight->display_weight($bodyFatDiv);?>
     </div>
     <br><br><br>
 </body>
@@ -350,4 +350,16 @@ if(isset($_POST["logout"])){
         let scroll = window.pageYOffset;
         window.location = "../delete.php?id = ";
     }
+    document.querySelector("#dropdown-title h1").addEventListener("click", function(){
+        document.querySelector("#dropdown-title-list").classList.toggle("hide-dropdown");
+        document.querySelector("#dropdown-title-list").classList.toggle("show-dropdown");
+    });
+    window.addEventListener("click", function(e){
+        if(document.querySelector("#dropdown-title-list").classList.contains("show-dropdown")){
+            if(e.target != document.querySelector("#dropdown-title-list") && e.target != document.querySelector("#dropdown-title h1")){
+                document.querySelector("#dropdown-title-list").classList.toggle("hide-dropdown");
+                document.querySelector("#dropdown-title-list").classList.toggle("show-dropdown");
+            }
+        }
+    });
 </script>

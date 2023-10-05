@@ -9,6 +9,120 @@ body {
     margin: 0;
     overflow-x: hidden;
 }
+h1 {
+    text-align: center;
+}
+/* title css */
+#title {
+    position: relative;
+    z-index: 1001;
+}
+#title-start {
+    margin-top: 0;
+    background-color: white;
+    text-align: center;
+    position: relative;
+    z-index: 1001;
+    margin-right: 0;
+    display: inline;
+}
+#title-top {
+    height: 60px;
+    background-color: white;
+    position: relative;
+    z-index: 1001;
+}
+#title-container {
+    position: relative;
+    text-align: center;
+}
+.hide-overflow {
+    overflow: hidden;
+}
+#dropdown-title {
+    cursor: pointer;
+    color:rgb(255, 115, 0);
+    display: inline;
+    position: relative;
+    transition: all 0.2s linear;
+}
+#dropdown-title h1 {
+    position: relative;
+    z-index: 1002;
+    display: inline;
+    background-color: white;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+}
+#title-overlay {
+    background-color: white;
+    position: absolute;
+    height: 130px;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+}
+#dropdown-title h1:hover {
+    color: rgb(171, 80, 5);
+    border-bottom: 3px solid rgb(171, 80, 5);
+}
+#down-caret {
+    font-size: 45px;
+    position: relative;
+    bottom: 15px;
+    right: 8px;
+    pointer-events: none;
+}
+#dropdown-title-list {
+    position: absolute;
+    right: 0;
+    width: 100%;
+    text-align: center;
+    list-style-type: none;
+    background-color: white;
+    border-radius: 5px;
+    margin: 0;
+    padding: 0;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    z-index: 1000;
+    transition: top 0.5s linear;
+}
+.hide-dropdown {
+    top: -94px;
+}
+.show-dropdown {
+    top: 180%;
+}
+#dropdown-title-list li a {
+    display: block;
+    padding: 10px 5px;
+    font-size: 27.25px;
+    text-decoration: none;
+    color: black;
+}
+#dropdown-title-list li:first-of-type a {
+    border-radius: 5px 5px 0 0;
+}
+#dropdown-title-list li:last-of-type a {
+    border-radius: 0 0 5px 5px;
+}
+#dropdown-title-list li a:hover {
+    background-color: #e6e6e6;
+}
+.blank-td {
+    background-color: white;
+    border: none;
+    width: 30%;
+}
+.measurements-table th {
+    background-color: #ff7300;
+    text-align: center;
+}
+.swipe-row th {
+    width: 30%;
+    color: white;
+    background-color: dodgerblue;
+}
 .inline {
     display: inline;
 }
@@ -38,11 +152,13 @@ body {
     color: white;
     font-size: 15px;
     position: fixed;
-    z-index: 1000;
+    z-index: 10000;
     box-shadow: 0px 10px 10px -15px #111; 
 }
 #logout {
     border: none !important;
+    display: inline-block;
+    text-decoration: none;
     background-color: #ff7300;
     cursor: pointer;
     font-size: 15px !important;
@@ -64,6 +180,7 @@ body {
     flex-wrap: wrap;
     align-items: center;
     gap: 50px;
+    position: relative;
 }
 .desktop-flex-row {
     flex-direction: row;
@@ -105,8 +222,18 @@ input::-webkit-inner-spin-button {
     width: 195px;
     border-radius: 10px;
 }
+.measurement-input-container {
+    width: 100%;
+    max-width: 250px;
+    height: 80px;
+    margin-bottom: 45px;
+}
+.measurement-input-container label {
+    font-size: 20px;
+    color: #ff7300;
+}
 
-#weight {
+#weight, .weight-form-input {
     background-color: #dddddd;
     width: 59%;
     position: relative;
@@ -144,7 +271,7 @@ input::-webkit-inner-spin-button {
     border-bottom: 2px solid white;
     margin: 3px auto;
 }
-.average-container {
+.circle-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -352,6 +479,7 @@ td.delete {
     position: relative;
     width: 85%;
     padding: 10px;
+    margin: auto;
     border-radius: 15px;
     border: solid 2px #960000;
     background-color: #ffadad;

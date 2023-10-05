@@ -62,6 +62,11 @@ if(isset($_POST["submit_button"])){
             $errors = true;
             $error_list .= "<li>That username is already taken. Try a different one.</li>";
         }
+        $findUsers = $db->select("SELECT username FROM users WHERE email = ?", "s", [$email]);
+        if($findUsers->num_rows > 0){
+            $errors = true;
+            $error_list .= "<li>That email already already has an account set up. Sign in <a href='login.php'>here</a></li>";
+        }
     }
     $password = inputCheck("password", "Password", "text", "Yes", $errors, $error_list);
     patternCheck($password, "/[a-zA-Z]+\d+/", $errors, $error_list, "Password must include at least 1 letter and 1 number.");
@@ -104,7 +109,7 @@ if(isset($_POST["submit_button"])){
             // echo $db->error;
         }
     }else{
-        $error_msg = "<div class='submit-error'>$error_title<ul>$errorList</ul></div>";
+        $error_msg = "<div class='error'>$error_title<ul>$error_list</ul></div><br>";
     }
 }
 ?>
@@ -122,30 +127,40 @@ if(isset($_POST["submit_button"])){
     <form id="login-form flex" method="POST" action="">
         <div class="large-input center">
             <label for="fname">First Name: </label><br>
-            <input type="text" name="fname" id="fname">
+            <input type="text" name="fname" value="<?php echo $fname?>" id="fname">
         </div>
         <div class="large-input center">
             <label for="lname">Last Name: </label><br>
-            <input type="text" name="lname" id="lname">
+            <input type="text" name="lname" value="<?php echo $lname?>" id="lname">
         </div>
         <div class="large-input center">
             <label for="email">Email Address: </label><br>
-            <input type="text" name="email" id="email" pattern="^\S+@\S+\.\S{2,}$">
+            <input type="text" name="email" id="email" value="<?php echo $email?>" pattern="^\S+@\S+\.\S{2,}$">
             <span class="error-msg hidden">Email Address format must match: email@address.com</span>
         </div>
         <div class="large-input center">
+            <label for="date-of-birth">Date of Birth: </label><br>
+            <input type="date" name="date_of_birth" id="date-of-birth" value="<?php echo $date_of_birth?>">
+        </div>
+        <div class="large-input center">
+            <label>Gender: </label><br>
+            <input type="radio" name="gender" id="male" value="Male"><label for="male">Male</label>
+            <input type="radio" name="gender" id="female" value="Female"><label for="female">Female</label>
+        </div>
+
+        <div class="large-input center">
             <label for="username">Username: </label><br>
-            <input type="text" name="username" id="username" pattern=".*[a-zA-Z]+\d+.*">
+            <input type="text" name="username" value="<?php echo $username?>" id="username" pattern=".*[a-zA-Z]+\d+.*">
             <span class="error-msg hidden">Username must include at least 1 letter and 1 number</span>
         </div>
         <div class="large-input center">
             <label for="password">Password: </label><br>
-            <input type="password" name="password" id="password" pattern=".*[a-zA-Z]+\d+.*">
+            <input type="password" name="password" id="password" value="<?php echo $password?>" pattern=".*[a-zA-Z]+\d+.*">
             <span class="error-msg hidden">Password must include at least 1 letter and 1 number</span>
         </div>
         <div class="large-input center">
             <label for="confirm_password">Confirm Password: </label><br>
-            <input type="password" name="confirm_password" id="confirm_password">
+            <input type="password" name="confirm_password" value="<?php echo $confirm_password?>" id="confirm_password">
             <span class="error-msg hidden">Passwords must match</span>
         </div>
         <p class="large-input center"><input type="submit" name="submit_button" value="Start Tracking"></p>
