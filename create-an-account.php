@@ -77,33 +77,14 @@ if(isset($_POST["submit_button"])){
     }else{
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     }
-    $ip_address_array = [
-        ["ip_address" => $_SERVER["REMOTE_ADDR"], "last_login" => date("Y-m-d H:i:s")]
-    ];
-    $ip_address_array = serialize($ip_address_array);
     if(!$errors){
-        $findIPAddresses = $db->select("SELECT username, ip_addresses FROM users WHERE ip_addresses LIKE ?", "s", ["%{$_SERVER["REMOTE_ADDR"]}%"]);
-        if($findIPAddresses->num_rows > 0){
-            while($ip = $findIPAddresses->fetch_assoc()){
-                $ip_addresses = unserialize($ip["ip_addresses"]);
-                foreach($ip_addresses as &$address){
-                    if($address["ip_address"] == $_SERVER["REMOTE_ADDR"]){
-                        unset($ip_addresses[array_search($address, $ip_addresses)]);
-                    }
-                }
-                unset($address);
-                $ip_addresses = serialize($ip_addresses);
-                if(!$db->write("UPDATE users SET ip_addresses = ? WHERE username = ?", "ss", [$ip_addresses, $ip["username"]])){
-                    $errors = false;
-                }
-            }
-        }
-        if(!$errors){
-            if($db->write("INSERT INTO users (ip_addresses, fname, lname, email, username, password) VALUES(?,?,?,?,?,?)", "ssssss", [$ip_address_array, $fname, $lname, $email, $username, $hashed_password])){
-                $_SESSION["logged_in"] = true;
-                $_SESSION["username"] = $username;
-                header("Location: index.php");
-            }
+        $expire_date = date("Y-m-d H:i:s", strtotime("+1 year"));
+        if($db->write("INSERT INTO users (fname, lname, email, username, password, session, session_expiration) VALUES(?,?,?,?,?,?,?)", "ssssssss", [$fname, $lname, $email, $username, $hashed_password, session_id(), $expire_date])){
+            $cookie_time = (3600 * 24 * 365); // 1 year
+            setcookie("session_id", session_id(), time() + $cookie_time);
+            $_SESSION["logged_in"] = true;
+            $_SESSION["username"] = $username;
+            header("Location: index.php");
         }else{
             echo "<script>alert('Something went wrong while trying to create this account')</script>";
             // echo $db->error;

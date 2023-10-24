@@ -49,51 +49,18 @@ if(isset($_POST["submit_button"])){
     $username = inputCheck("username", "Username", "text", "Yes", $errors, $error_list);
     $password = inputCheck("password", "Password", "text", "Yes", $errors, $error_list);
     if(!$errors){
-        $findUser = $db->select("SELECT password, ip_addresses FROM users WHERE username = ?", "s", [$username]);
+        $findUser = $db->select("SELECT password FROM users WHERE username = ?", "s", [$username]);
         if($findUser->num_rows > 0){
             while($row = $findUser->fetch_assoc()){
                 $hashed_password = $row["password"];
                 if(password_verify($password, $hashed_password)){
-                    $findIPAddresses = $db->select("SELECT username, ip_addresses FROM users WHERE ip_addresses LIKE ?", "s", ["%{$_SERVER["REMOTE_ADDR"]}%"]);
-                    if($findIPAddresses->num_rows == 0){
-                        $ip_addresses = unserialize($row["ip_addresses"]);
-                        array_push($ip_addresses, ["ip_address" => $_SERVER["REMOTE_ADDR"], "last_login" => date("Y-m-d H:i:s")]);
-                        $ip_addresses = serialize($ip_addresses);
-                        if($db->write("UPDATE users SET ip_addresses = ? WHERE username = ?", "ss", [$ip_addresses, $username])){
-                            $_SESSION["logged_in"] = true;
-                            $_SESSION["username"] = $username;
-                            header("Location: index.php");
-                        }
-                    }else{
-                        $originalUser = true;
-                        while($ip = $findIPAddresses->fetch_assoc()){
-                            if($ip["username"] != $username){
-                                $ip_addresses = unserialize($ip["ip_addresses"]);
-                                foreach($ip_addresses as &$address){
-                                    if($address["ip_address"] == $_SERVER["REMOTE_ADDR"]){
-                                        unset($ip_addresses[array_search($address, $ip_addresses)]);
-                                    }
-                                }
-                                unset($address);
-                                $ip_addresses = serialize($ip_addresses);
-                                $db->write("UPDATE users SET ip_addresses = ? WHERE username = ?", "ss", [$ip_addresses, $ip["username"]]);
-                                $originalUser = false;
-                            }
-                        }
-                        if(!$originalUser){
-                            $ip_addresses = unserialize($row["ip_addresses"]);
-                            array_push($ip_addresses, ["ip_address" => $_SERVER["REMOTE_ADDR"], "last_login" => date("Y-m-d H:i:s")]);
-                            $ip_addresses = serialize($ip_addresses);
-                            if($db->write("UPDATE users SET ip_addresses = ? WHERE username = ?", "ss", [$ip_addresses, $username])){
-                                $_SESSION["logged_in"] = true;
-                                $_SESSION["username"] = $username;
-                                header("Location: index.php");
-                            }
-                        }else{
-                            $_SESSION["logged_in"] = true;
-                            $_SESSION["username"] = $username;
-                            header("Location: index.php");
-                        }
+                    $expire_date = date("Y-m-d H:i:s", strtotime("+1 year"));
+                    if($db->write("UPDATE users SET session = ?, session_expiration = ? WHERE username = ?", "sss", [session_id(), $expire_date, $username])){
+                        $cookie_time = (3600 * 24 * 365); // 1 year
+                        setcookie("session_id", session_id(), time() + $cookie_time);
+                        $_SESSION["logged_in"] = true;
+                        $_SESSION["username"] = $username;
+                        header("Location: index.php");
                     }
                 }else{
                     $errors = true;

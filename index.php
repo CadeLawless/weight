@@ -9,30 +9,21 @@ $weight = new Weight($db);
 
 // check if logged in
 if(!isset($_SESSION["logged_in"])){
-    // check if IP address is associated with a user 
-    $current_ip_address = $_SERVER["REMOTE_ADDR"];
-    $findIPAddresses = $db->query("SELECT username, ip_addresses FROM users");
-    if($findIPAddresses->num_rows > 0){
-        while($row = $findIPAddresses->fetch_assoc()){
-            $ip_addresses = unserialize($row["ip_addresses"]);
-            if(is_array($ip_addresses)){
-                foreach($ip_addresses as $ip){
-                    if($ip["ip_address"] == $current_ip_address){
-                        // check last login, if it has been over a year since last login, make them sign in again
-                        $oneYearAgo = date("Y-m-d H:i:s", strtotime("-1 year"));
-                        $last_login = date("Y-m-d H:i:s", strtotime($ip["last_login"]));
-                        if($last_login < $oneYearAgo){
-                            header("Location: login.php");
-                        }else{
-                            $_SESSION["logged_in"] = true;
-                            $_SESSION["username"] = $row["username"];
-                            $username = $_SESSION["username"];
-                        }
-                    }
+    if(isset($_COOKIE["session_id"])){
+        $session = $_COOKIE["session_id"];
+        $findUser = $db->select("SELECT username, session_expiration FROM users WHERE session = ?", "s", [$session]);
+        if($findUser->num_rows > 0){
+            while($row = $findUser->fetch_assoc()){
+                $session_expiration = $row["session_expiration"];
+                if(date("Y-m-d H:i:s") < $session_expiration){
+                    $username = $row["username"];
+                    $_SESSION["logged_in"] = true;
+                    $_SESSION["username"] = $username;
+                }else{
+                    header("Location: login.php");
                 }
             }
-        }
-        if(!$_SESSION["logged_in"]){
+        }else{
             header("Location: login.php");
         }
     }else{
@@ -41,11 +32,7 @@ if(!isset($_SESSION["logged_in"])){
 }else{
     $username = $_SESSION["username"];
 }
-/* $array = [
-    ["ip_address" => $_SERVER["REMOTE_ADDR"], "last_login", date("Y-m-d H:i:s")]
-];
-echo serialize($array);
- */
+
 // initialize form field variables
 $getWeight = "";
 $gender = "";
