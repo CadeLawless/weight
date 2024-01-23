@@ -195,7 +195,8 @@ class Pagination {
                                     <tr>
                                         <th style='width: 40%;'>Date Weighed</th>
                                         <th>Weight</th>
-                                        <td style='width: 20%;'></td>
+                                        <td style='width: 10%;'></td>
+                                        <td style='width: 10%;'></td>
                                     </tr>
                                 </thead>
                             </table>";
@@ -209,7 +210,26 @@ class Pagination {
                                     <tr>
                                         <td style='width: 40%; padding: 0 15px;'>$dateWeighed</td>
                                         <td style='padding: 0 15px;'>$weight lbs</td>
-                                        <td style='width: 20%; text-align: center;'><img class='delete-icon' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
+                                        <td style='width: 10%; text-align: center;'><img class='edit-button' id='$id' src='images/edit.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
+                                        <div class='popup-container edit-popup-$id flex hidden'>
+                                            <div class='popup flex'>
+                                                <div class='close-container'>
+                                                    <img src='images/site-images/close.png' class='close-button'>
+                                                </div>
+                                                <div>
+                                                    <form method='POST' action=''>
+                                                        <label for='date_weighed$id'>Date Weighed:<br></label>
+                                                        <input type='date' value='{$row["date_weighed"]}' id='date_weighed$id' name='{$id}_date_weighed'><br>
+                                                        <label for='weight$id'>Weight:<br></label>
+                                                        <div class='input-container'>
+                                                            <input type='text' inputmode='decimal' value='$weight' maxlength='5' id='weight$id' name='{$id}_weight'> <span>lbs</span>
+                                                        </div>
+                                                        <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <td style='width: 10%; text-align: center;'><img class='delete-icon' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
                                         <td class='delete'><a href='delete.php?id=$id' class='delete-button'>Delete</a></td>
                                     </tr>
                                 </tbody>

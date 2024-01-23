@@ -230,17 +230,19 @@ if(isset($_POST["body-fat-submit"])){
     }
     ?>
     });
-    function showPopup(){
-        let popup = document.getElementById("body-fat-popup");
-        popup.style.display = "block";
-        popup.style.zIndex = "10";
-        popup.parentElement.style.zIndex = "5";
+    // open edit popup for specified weight entry on click of edit button
+    for(const edit of document.querySelectorAll(".edit-button")){
+        edit.addEventListener("click", function(e){
+            e.preventDefault();
+            document.querySelector(".edit-popup-" + edit.id).classList.remove("hidden");
+        });
     }
-    function closePopup(){
-        let popup= document.getElementById("body-fat-popup");
-        popup.style.display = "none";
-        popup.style.zIndex = "-1";
-        popup.parentElement.style.zIndex = "-1";
+
+    // close popup on click of x or no button
+    for(const x of document.querySelectorAll(".close-button")){
+        x.addEventListener("click", function(){
+            x.parentElement.parentElement.parentElement.classList.add("hidden");
+        })
     }
     function showGender(){
         document.querySelector("#restOfForm").style.display = "block";
