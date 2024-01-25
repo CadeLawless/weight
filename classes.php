@@ -104,43 +104,47 @@ class Pagination {
                     </div>
                     <div>
                     <div class='body-fat-percentage'>
-                        <a class='body-fat-button' onClick='showPopup()'>Calculate Body Fat Percentage</a>
+                        <a class='body-fat-button popup-button'>Calculate Body Fat Percentage</a>
                     </div>";
                     if($bodyFatDiv != "") echo $bodyFatDiv;
                     echo "
-                    <div class = 'flex-popup'>
-                        <div class = 'popup' id='body-fat-popup'>
-                            <img onclick='closePopup()' src='images/close.png' class='close'>
-                            <h3 style='text-align: center'>Body Fat Percentage Calculator</h3>
-                            <form id='body-fat-form' method='POST' action=''>
-                                <label>Gender: <br></label>
-                                <select name='gender' onChange='showGender.call(this)'>
-                                    <option selected disabled>Select an option</option>
-                                    <option value='male'>Male</option>
-                                    <option value='female'>Female</option>
-                                </select><br><br>
-                                <div id='restOfForm' style='display: none'>
-                                    <label>Age: <br></label>
-                                    <input type='text' inputmode='numeric' name='age' step='any'><br><br>
-                                    <label>Weight: <br></label>
-                                    <input type='text' inputmode='decimal' name='body-fat-weight'> <span>lbs</span><br><br>
-                                    <label>Thigh: <br></label>
-                                    <input type='text' inputmode='decimal' name='thigh'> <span>mm</span><br><br>
-                                    <div id='male' style='display: none'>
-                                        <label>Chest: <br></label>
-                                        <input type='text' inputmode='decimal' name='chest'> <span>mm</span><br><br>
-                                        <label>Abdomen: <br></label>
-                                        <input type='text' inputmode='decimal' name='abdomen'> <span>mm</span><br><br>
+                    <div class = 'flex hidden popup-container'>
+                        <div class = 'popup flex' id='body-fat-popup'>
+                            <div class='close-container'>
+                                <img src='images/close.png' class='close-button'>
+                            </div>
+                            <div style='overflow: auto;'>
+                                <h3 style='text-align: center'>Body Fat Percentage Calculator</h3>
+                                <form id='body-fat-form' method='POST' action=''>
+                                    <label>Gender: <br></label>
+                                    <select name='gender' onChange='showGender.call(this)'>
+                                        <option selected disabled>Select an option</option>
+                                        <option value='male'>Male</option>
+                                        <option value='female'>Female</option>
+                                    </select><br><br>
+                                    <div id='restOfForm' style='display: none'>
+                                        <label>Age: <br></label>
+                                        <input type='text' inputmode='numeric' name='age' step='any'><br><br>
+                                        <label>Weight: <br></label>
+                                        <input type='text' inputmode='decimal' name='body-fat-weight'> <span>lbs</span><br><br>
+                                        <label>Thigh: <br></label>
+                                        <input type='text' inputmode='decimal' name='thigh'> <span>mm</span><br><br>
+                                        <div id='male' style='display: none'>
+                                            <label>Chest: <br></label>
+                                            <input type='text' inputmode='decimal' name='chest'> <span>mm</span><br><br>
+                                            <label>Abdomen: <br></label>
+                                            <input type='text' inputmode='decimal' name='abdomen'> <span>mm</span><br><br>
+                                        </div>
+                                        <div id='female' style='display: none'>
+                                            <label>Triceps: <br></label>
+                                            <input type='text' inputmode='decimal' name='triceps'> <span>mm</span><br><br>
+                                            <label>Suprailiac: <br></label>
+                                            <input type='text' inputmode='decimal' name='suprailiac'> <span>mm</span><br><br>
+                                        </div>
+                                        <p align='center'><input type='submit' id='body-fat-submit' name='body-fat-submit' value='Calculate'></p>
                                     </div>
-                                    <div id='female' style='display: none'>
-                                        <label>Triceps: <br></label>
-                                        <input type='text' inputmode='decimal' name='triceps'> <span>mm</span><br><br>
-                                        <label>Suprailiac: <br></label>
-                                        <input type='text' inputmode='decimal' name='suprailiac'> <span>mm</span><br><br>
-                                    </div>
-                                    <p align='center'><input type='submit' id='body-fat-submit' name='body-fat-submit' value='Calculate'></p>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                     </div>
                     <div class='desktop-flex-row'>
@@ -210,25 +214,29 @@ class Pagination {
                                     <tr>
                                         <td style='width: 40%; padding: 0 15px;'>$dateWeighed</td>
                                         <td style='padding: 0 15px;'>$weight lbs</td>
-                                        <td style='width: 10%; text-align: center;'><img class='edit-button' id='$id' src='images/edit.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
-                                        <div class='popup-container edit-popup-$id flex hidden'>
-                                            <div class='popup flex'>
-                                                <div class='close-container'>
-                                                    <img src='images/site-images/close.png' class='close-button'>
-                                                </div>
-                                                <div>
-                                                    <form method='POST' action=''>
-                                                        <label for='date_weighed$id'>Date Weighed:<br></label>
-                                                        <input type='date' value='{$row["date_weighed"]}' id='date_weighed$id' name='{$id}_date_weighed'><br>
-                                                        <label for='weight$id'>Weight:<br></label>
-                                                        <div class='input-container'>
-                                                            <input type='text' inputmode='decimal' value='$weight' maxlength='5' id='weight$id' name='{$id}_weight'> <span>lbs</span>
-                                                        </div>
-                                                        <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
-                                                    </form>
+                                        <td style='width: 10%; text-align: center;'>
+                                            <img class='edit-button popup-button' id='$id' src='images/edit.png' style='cursor: pointer; width: 15px; height: 15px;'>
+                                            <div class='popup-container edit-popup-$id flex hidden'>
+                                                <div class='popup flex'>
+                                                    <div class='close-container'>
+                                                        <img src='images/close.png' class='close-button'>
+                                                    </div>
+                                                    <div class='popup-content'>
+                                                        <form class='edit-form' method='POST' action=''>
+                                                            <div style='margin: auto;'>
+                                                                <label for='date_weighed$id'>Date Weighed:<br></label>
+                                                                <input type='date' value='{$row["date_weighed"]}' id='date_weighed$id' name='{$id}_date_weighed'><br>
+                                                                <label for='weight$id'>Weight:<br></label>
+                                                                <div class='input-container'>
+                                                                    <input class='edit-weight' type='text' inputmode='decimal' value='$weight' maxlength='5' id='weight$id' name='{$id}_weight'> <span>lbs</span>
+                                                                </div>
+                                                            </div>
+                                                            <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </td>
                                         <td style='width: 10%; text-align: center;'><img class='delete-icon' src='images/delete.png' style='cursor: pointer; width: 15px; height: 15px;'></td>
                                         <td class='delete'><a href='delete.php?id=$id' class='delete-button'>Delete</a></td>
                                     </tr>

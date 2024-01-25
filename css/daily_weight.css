@@ -12,6 +12,9 @@ body {
 h1 {
     text-align: center;
 }
+label {
+    font-weight: bold;
+}
 /* title css */
 #title {
     position: relative;
@@ -137,11 +140,8 @@ h1 {
     font-size: 14px;
     display: block;
 }
-.hidden {
-    display: none;
-}
 .invalid ~ span {
-    display: block;
+    display: block !important;
 }
 .large-input {
     flex-basis: 100%;
@@ -304,7 +304,6 @@ input::-webkit-inner-spin-button {
 .popup-container {
     justify-content: center;
     position: fixed;
-    align-items: flex-start;
     z-index: 100;
     top: 0;
     left: 0;
@@ -313,17 +312,27 @@ input::-webkit-inner-spin-button {
     background-color: rgba(0, 0, 0, 0.316);
 }
 .popup {
-    width: 40%;
+    width: 400px;
+    max-width: 100%;
     max-height: 80vh;
     flex-grow: 0 !important;
     align-items: center;
     justify-content: center;
-    margin: 160px 15px 0;
+    margin: 65px 15px 0;
     background-color: white;
     position: relative;
     border-radius: 5px;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     padding: 20px;
+    overflow: auto;
+}
+.popup-content {
+    text-align: left;
+    width: 100%;
+}
+.edit-form {
+    width: 130px;
+    margin: auto;
 }
 .close-container {
     position: absolute;
@@ -340,14 +349,16 @@ input::-webkit-inner-spin-button {
     width: 20px;
     height: 20px;
     cursor: pointer;
+    top: 3px;
+    right: 3px;
     transition: width 0.2s, height 0.2s;
 }
 .close-button:hover {
-    height: 15px;
-    width: 15px;
+    height: 17px;
+    width: 17px;
 }
 .close-button:active {
-    top: 2px;
+    top: 4px;
 }
 #label-after {
     font-size: 40px;
@@ -601,6 +612,18 @@ td.delete {
     60% {
         transform: translate3d(4px, 0, 0);
     }
+}
+.hidden {
+    display: none;
+}
+#date_entered {
+    border: none;
+    background-color: #dddddd;
+    border-radius: 10px;
+    padding: 5px;
+}
+.edit-weight {
+    width: 75px;
 }
 @media (max-width: 880px){
     table {

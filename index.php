@@ -35,6 +35,7 @@ if(!isset($_SESSION["logged_in"])){
 
 // initialize form field variables
 $getWeight = "";
+$dateEntered = date("Y-m-d");
 $gender = "";
 $age = "";
 $bodyFatWeight = "";
@@ -62,7 +63,15 @@ if (isset($_POST["weight-submit"])){
         $errorList .= "<li>Weight is a required field</li>";
     }
     date_default_timezone_set("America/Chicago");
-    $dateEntered = date("Y-m-d");
+    $dateEntered = $_POST["date_entered"] ?? "";
+    if($dateEntered == ""){
+        $errors = true;
+        $errorList .= "<li>Date is a required field. Please fill it out.</li>";
+    }
+    if($dateEntered > date("Y-m-d")){
+        $errors = true;
+        $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
+    }
     if(!$errors){
         if(!$weight->insert_weight($getWeight, $dateEntered)){
             echo "<script>alert(`Weight could not be saved.`);</script>";
@@ -174,12 +183,16 @@ if(isset($_POST["body-fat-submit"])){
                 <?php if(isset($errorMessage)) echo $errorMessage?>
                 <div>
                     <div class="input-container">
-                        <input type="text" inputmode="decimal" value="<?php echo $getWeight?>" maxlength="5" id="weight" name="weight">
+                        <input type="text" inputmode="decimal" value="<?php echo $getWeight; ?>" maxlength="5" id="weight" name="weight">
                         <div id="label-after">lbs</div>
                     </div>
                 </div>
                 <div id="input-error" class="error" style="display: none">
                     <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
+                </div>
+                <div>
+                    <label for="date_entered">Date: </label>
+                    <input required type="date" name="date_entered" id="date_entered" value="<?php echo $dateEntered; ?>" />
                 </div>
                 <input type="submit" name="weight-submit" id="weight-submit" value="Submit">
             </form>
@@ -231,10 +244,14 @@ if(isset($_POST["body-fat-submit"])){
     ?>
     });
     // open edit popup for specified weight entry on click of edit button
-    for(const edit of document.querySelectorAll(".edit-button")){
-        edit.addEventListener("click", function(e){
+    for(const btn of document.querySelectorAll(".popup-button")){
+        btn.addEventListener("click", function(e){
             e.preventDefault();
-            document.querySelector(".edit-popup-" + edit.id).classList.remove("hidden");
+            if(btn.classList.contains("body-fat-button")){
+                btn.parentElement.nextElementSibling.classList.remove("hidden");
+            }else{
+                btn.nextElementSibling.classList.remove("hidden");
+            }
         });
     }
 
