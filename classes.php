@@ -26,10 +26,9 @@ class DB{
     }
 
     // parameterized mysqli select statement
-    public function select($sql, $types, $values){
+    public function select($sql, $values){
         if($selectStatement = $this->connection->prepare($sql)){
-            $selectStatement->bind_param($types, ...$values);
-            $selectStatement->execute();
+            $selectStatement->execute($values);
             return $selectStatement->get_result();
         }else{
             //echo $db->error;
@@ -38,10 +37,9 @@ class DB{
     }
 
     // parameterized mysqli write (insert, update, delete) statement
-    public function write($sql, $types, $values){
+    public function write($sql, $values){
         if($writeStatement = $this->connection->prepare($sql)){
-            $writeStatement->bind_param($types, ...$values);
-            if($writeStatement->execute()){
+            if($writeStatement->execute($values)){
                 return true;
             }else{
                 //echo $writeStatement->error;
@@ -53,7 +51,7 @@ class DB{
     }
 }
 class Pagination {
-    public static function paginate($type, $db, $query, $itemsPerPage, $pageNumber, $bodyFatDiv=""){
+    public static function paginate($type, $db, $query, $itemsPerPage, $pageNumber, $bodyFatDiv="", $editErrorID="", $editErrorMsg="", $editInputArray=[]){
         $offset = ($pageNumber - 1) * $itemsPerPage;
         $selectQuery = $db->query("$query LIMIT $offset, $itemsPerPage");
         if($selectQuery->num_rows > 0){
@@ -114,7 +112,7 @@ class Pagination {
                                 <img src='images/close.png' class='close-button'>
                             </div>
                             <div style='overflow: auto;'>
-                                <h3 style='text-align: center'>Body Fat Percentage Calculator</h3>
+                                <h3 style='text-align: center'>Body Fat Percentage Calculator</h3><br />
                                 <form id='body-fat-form' method='POST' action=''>
                                     <label>Gender: <br></label>
                                     <select name='gender' onChange='showGender.call(this)'>
@@ -216,19 +214,27 @@ class Pagination {
                                         <td style='padding: 0 15px;'>$weight lbs</td>
                                         <td style='width: 10%; text-align: center;'>
                                             <img class='edit-button popup-button' id='$id' src='images/edit.png' style='cursor: pointer; width: 15px; height: 15px;'>
-                                            <div class='popup-container edit-popup-$id flex hidden'>
+                                            <div class='popup-container edit-popup-$id flex";
+                                            if($id != $editErrorID) echo " hidden";
+                                            echo "'>
                                                 <div class='popup flex'>
                                                     <div class='close-container'>
                                                         <img src='images/close.png' class='close-button'>
                                                     </div>
-                                                    <div class='popup-content'>
+                                                    <div class='popup-content'>";
+                                                        if($id == $editErrorID) echo $editErrorMsg;
+                                                        echo "
                                                         <form class='edit-form' method='POST' action=''>
                                                             <div style='margin: auto;'>
                                                                 <label for='date_weighed$id'>Date Weighed:<br></label>
-                                                                <input type='date' value='{$row["date_weighed"]}' id='date_weighed$id' name='{$id}_date_weighed'><br>
+                                                                <input type='date' value='";
+                                                                echo $id == $editErrorID ? $editInputArray["date_weighed"] : $row["date_weighed"];
+                                                                echo "' id='date_weighed$id' name='{$id}_date_weighed'><br>
                                                                 <label for='weight$id'>Weight:<br></label>
                                                                 <div class='input-container'>
-                                                                    <input class='edit-weight' type='text' inputmode='decimal' value='$weight' maxlength='5' id='weight$id' name='{$id}_weight'> <span>lbs</span>
+                                                                    <input class='edit-weight' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["weight"] : $weight;
+                                                                    echo "' maxlength='5' id='weight$id' name='{$id}_weight'> <span>lbs</span>
                                                                 </div>
                                                             </div>
                                                             <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
@@ -245,72 +251,111 @@ class Pagination {
                     }
                     echo "</div>";
                 }else if($type == "Measurements"){
-                    $allMeasurements = $selectQuery->fetch_all(MYSQLI_ASSOC);
-                    echo "
-                    <div class='history'>
-                        <h2 id='weight-history-title' align='center'>Measurements History</h2>
-                        <div id='table' class='measurements-table'>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th class='blank-td'></th>";
-                                        foreach($allMeasurements as $row){
-                                            $dateMeasured = date("m/d/Y", strtotime($row["date_measured"]));
-                                            echo "<th>$dateMeasured</th>";
-                                        }
-                                        echo "
-                                    </tr>
-                                </thead>
-                            </table>
-                            <table class='swipe-row'>
-                                <tbody>
-                                    <tr>
-                                        <th>Waist</th>";
-                                        foreach($allMeasurements as $row){
-                                            $waist = $row["waist"];
-                                            echo "<td>$waist</td>";
-                                        }
-                                        echo "
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table class='swipe-row'>
-                                <tbody>
-                                    <tr>
-                                        <th>Right Bicep</th>";
-                                        foreach($allMeasurements as $row){
-                                            $rightBicep = $row["right_bicep"];
-                                            echo "<td>$rightBicep</td>";
-                                        }
-                                        echo "
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table class='swipe-row'>
-                                <tbody>
-                                    <tr>
-                                        <th>Left Bicep</th>";
-                                        foreach($allMeasurements as $row){
-                                            $leftBicep = $row["left_bicep"];
-                                            echo "<td>$leftBicep</td>";
-                                        }
-                                        echo "
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table class='swipe-row'>
-                                <tbody>
-                                    <tr>
-                                        <th>Chest</th>";
-                                        foreach($allMeasurements as $row){
-                                            $chest = $row["chest"];
-                                            echo "<td>$chest</td>";
-                                        }
-                                        echo "
-                                    </tr>
-                                </tbody>
-                            </table>";
-                    echo "</div>";
+                    if($selectQuery->num_rows > 0){
+                        echo "
+                        <div class='history'>
+                            <h2 id='weight-history-title' align='center'>Measurements History</h2>
+                            <div class='measurements-table'>";
+                            while($row = $selectQuery->fetch_assoc()){
+                                $id = $row["id"];
+                                $waist = htmlspecialchars($row["waist"]);
+                                $right_bicep = htmlspecialchars($row["right_bicep"]);
+                                $left_bicep = htmlspecialchars($row["left_bicep"]);
+                                $chest = htmlspecialchars($row["chest"]);
+                                $date_measured = date("n/j/Y", strtotime($row["date_measured"]));
+                                echo "
+                                <div class='measurement-entry'>
+                                    <div class='flex-row top-row'>
+                                        <div class='flex-td label-td'>$date_measured</div>
+                                        <div class='flex-td measurement-td'>
+                                            <img class='edit-button popup-button' src='images/edit-white.png' style='cursor: pointer; width: 15px; height: 15px;'>
+                                            <div class='popup-container edit-popup-$id flex";
+                                            if($id != $editErrorID) echo " hidden";
+                                            echo "'>
+                                                <div class='popup flex'>
+                                                    <div class='close-container'>
+                                                        <img src='images/close.png' class='close-button'>
+                                                    </div>
+                                                    <div class='popup-content'>";
+                                                        if($id == $editErrorID) echo $editErrorMsg;
+                                                        echo "
+                                                        <form class='edit-form' method='POST' action=''>
+                                                            <div style='margin: auto;'>
+                                                                <label for='date_measured$id'>Date Measured:<br></label>
+                                                                <input type='date' value='";
+                                                                echo $id == $editErrorID ? $editInputArray["date_measured"] : date("Y-m-d", strtotime($row["date_measured"]));
+                                                                echo "' id='date_measured$id' name='{$id}_date_measured'><br>
+                                                                <label for='waist$id'>Waist:<br></label>
+                                                                <div class='input-container'>
+                                                                    <input class='edit-waist' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["waist"] : $waist;
+                                                                    echo "' maxlength='5' id='waist$id' name='{$id}_waist'> <span>in</span>
+                                                                </div>
+                                                                <div class='input-container'>
+                                                                    <label for='right_bicep$id'>Right Bicep:<br></label>
+                                                                    <input class='edit-right_bicep' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["right_bicep"] : $right_bicep;
+                                                                    echo "' maxlength='5' id='right_bicep$id' name='{$id}_right_bicep'> <span>in</span>
+                                                                </div>
+                                                                <div class='input-container'>
+                                                                    <label for='left_bicep$id'>Left Bicep:<br></label>
+                                                                    <input class='edit-left_bicep' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["left_bicep"] : $left_bicep;
+                                                                    echo "' maxlength='5' id='left_bicep$id' name='{$id}_left_bicep'> <span>in</span>
+                                                                </div>
+                                                                <div class='input-container'>
+                                                                    <label for='chest$id'>Chest:<br></label>
+                                                                    <input class='edit-chest' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["chest"] : $chest;
+                                                                    echo "' maxlength='5' id='chest$id' name='{$id}_chest'> <span>in</span>
+                                                                </div>
+                                                            </div>
+                                                            <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <img class='delete-icon popup-button' src='images/delete-white.png' style='cursor: pointer; width: 15px; height: 15px;'>
+                                            <div class='popup-container delete-popup-$id flex hidden'>
+                                                <div class='popup flex'>
+                                                    <div class='close-container'>
+                                                        <img src='images/close.png' class='close-button'>
+                                                    </div>
+                                                    <div class='popup-content'>
+                                                        <p><strong>Are you sure you want to delete this entry?</strong></p>
+                                                        <p>
+                                                            <span>Date Measured: $date_measured</span><br />
+                                                            <span>Waist: $waist in</span><br />
+                                                            <span>Right Bicep: $right_bicep in</span><br />
+                                                            <span>Left Bicep: $left_bicep in</span><br />
+                                                            <span>Chest: $chest in</span><br />
+                                                        </p>
+                                                        <p class='center'><a class='no-button'>No</a><a class='yes-button' href='delete-measurement.php?id=$id'>Yes</a></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Waist</div>
+                                        <div class='flex-td measurement-td'>$waist in</div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Right Bicep</div>
+                                        <div class='flex-td measurement-td'>$right_bicep in</div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Left Bicep</div>
+                                        <div class='flex-td measurement-td'>$left_bicep in</div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Chest</div>
+                                        <div class='flex-td measurement-td'>$chest in</div>
+                                    </div>
+                                </div>";
+                            }
+                            echo "</div>";
+                        }
                 }
                     $numberOfItemsOnPage = $selectQuery->num_rows;
                     $numberOfItems = $db->query($query)->num_rows;
@@ -395,21 +440,13 @@ class Weight {
         $updateWeight->bind_param("i", $id);
         return($updateWeight->execute());
     }
-    public function display_weight($bodyFatDiv){
-        if(isset($_GET["pageno"])){
-            $pageno = $_GET["pageno"];
-        }else{
-            $pageno = 1;
-        }
-        Pagination::paginate("Weight", $this->db, "SELECT * FROM daily_weight WHERE username = '{$_SESSION["username"]}' ORDER BY date_weighed DESC", 7, $pageno, $bodyFatDiv);
+    public function display_weight($bodyFatDiv, $edit_error_id, $edit_error_msg, $edit_input_array=[]){
+        $pageno = $_GET["pageno"] ?? 1;
+        Pagination::paginate(type: "Weight", db: $this->db, query: "SELECT * FROM daily_weight WHERE username = '{$_SESSION["username"]}' ORDER BY date_weighed DESC", itemsPerPage: 7, pageNumber: $pageno, bodyFatDiv: $bodyFatDiv, editErrorID: $edit_error_id, editErrorMsg: $edit_error_msg, editInputArray: $edit_input_array);
     }
-    public function display_measurements(){
-        if(isset($_GET["pageno"])){
-            $pageno = $_GET["pageno"];
-        }else{
-            $pageno = 1;
-        }
-        Pagination::paginate("Measurements", $this->db, "SELECT * FROM daily_measurements WHERE username = '{$_SESSION["username"]}' ORDER BY date_measured DESC", 3, $pageno);
+    public function display_measurements($edit_error_id, $edit_error_msg, $edit_input_array=[]){
+        $pageno = $_GET["pageno"] ?? 1;
+        Pagination::paginate(type: "Measurements", db: $this->db, query: "SELECT * FROM daily_measurements WHERE username = '{$_SESSION["username"]}' ORDER BY date_measured DESC", itemsPerPage: 3, pageNumber: $pageno, editErrorID: $edit_error_id, editErrorMsg: $edit_error_msg, editInputArray: $edit_input_array);
     }
 }
 ?>

@@ -11,7 +11,7 @@ $weight = new Weight($db);
 if(!isset($_SESSION["logged_in"])){
     if(isset($_COOKIE["session_id"])){
         $session = $_COOKIE["session_id"];
-        $findUser = $db->select("SELECT username, session_expiration FROM users WHERE session = ?", "s", [$session]);
+        $findUser = $db->select("SELECT username, session_expiration FROM users WHERE session = ?", [$session]);
         if($findUser->num_rows > 0){
             while($row = $findUser->fetch_assoc()){
                 $session_expiration = $row["session_expiration"];
@@ -33,6 +33,9 @@ if(!isset($_SESSION["logged_in"])){
     $username = $_SESSION["username"];
 }
 
+$pageno = $_GET["pageno"] ?? 1;
+$_SESSION["home"] = "index.php?pageno=$pageno#weight-history-title";
+
 // initialize form field variables
 $getWeight = "";
 $dateEntered = date("Y-m-d");
@@ -45,89 +48,141 @@ $abdomen = "";
 $triceps = "";
 $suprailiac = "";
 $bodyFatDiv = "";
+$edit_error_id = "";
+$edit_error_msg = "";
+$editWeight = "";
+$editDateWeighed = "";
 
-if (isset($_POST["weight-submit"])){
-    $errors = false;
-    $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
-    $errorList = "";
-    if(isset($_POST["weight"])){
-        $getWeight = trim($_POST["weight"]);
-        if(preg_match("/^\d*\.?\d*$/", $getWeight)){
-            $getWeight = $weight->addDecimal($getWeight);
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if(isset($_POST["weight-submit"])){
+        $errors = false;
+        $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
+        $errorList = "";
+        if(isset($_POST["weight"])){
+            $getWeight = trim($_POST["weight"]);
+            if(preg_match("/^\d*\.?\d*$/", $getWeight)){
+                $getWeight = $weight->addDecimal($getWeight);
+            }else{
+                $errors = true;
+                $errorList .= "<li>Weight must only contain numbers and up to 1 decimal</li>";
+            }
         }else{
             $errors = true;
-            $errorList .= "<li>Weight must only contain numbers and up to 1 decimal</li>";
+            $errorList .= "<li>Weight is a required field</li>";
         }
-    }else{
-        $errors = true;
-        $errorList .= "<li>Weight is a required field</li>";
-    }
-    date_default_timezone_set("America/Chicago");
-    $dateEntered = $_POST["date_entered"] ?? "";
-    if($dateEntered == ""){
-        $errors = true;
-        $errorList .= "<li>Date is a required field. Please fill it out.</li>";
-    }
-    if($dateEntered > date("Y-m-d")){
-        $errors = true;
-        $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
-    }
-    if(!$errors){
-        if(!$weight->insert_weight($getWeight, $dateEntered)){
-            echo "<script>alert(`Weight could not be saved.`);</script>";
+        date_default_timezone_set("America/Chicago");
+        $dateEntered = $_POST["date_entered"] ?? "";
+        if($dateEntered == ""){
+            $errors = true;
+            $errorList .= "<li>Date is a required field. Please fill it out.</li>";
+        }
+        if($dateEntered > date("Y-m-d")){
+            $errors = true;
+            $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
+        }
+        if(!$errors){
+            if(!$weight->insert_weight($getWeight, $dateEntered)){
+                echo "<script>alert(`Weight could not be saved.`);</script>";
+            }else{
+                header("Location: index.php");
+            } 
         }else{
-            header("Location: index.php");
-        } 
-    }else{
-        $errorMessage = "<div class='error' style='width: 100%;'>$errorTitle<ul>$errorList</ul></div>";
-    }
-}
-if(isset($_POST["body-fat-submit"])){
-    $gender = trim($_POST["gender"]);
-    $age = trim($_POST["age"]);
-    $bodyFatWeight = trim($_POST["body-fat-weight"]);
-    $thigh = trim($_POST["thigh"]);
-    $chest = trim($_POST["chest"]);
-    $abdomen = trim($_POST["abdomen"]);
-    $triceps = trim($_POST["triceps"]);
-    $suprailiac = trim($_POST["suprailiac"]);
+            $errorMessage = "<div class='error' style='width: 100%;'>$errorTitle<ul>$errorList</ul></div>";
+        }
+    }elseif(isset($_POST["body-fat-submit"])){
+        $gender = trim($_POST["gender"]);
+        $age = trim($_POST["age"]);
+        $bodyFatWeight = trim($_POST["body-fat-weight"]);
+        $thigh = trim($_POST["thigh"]);
+        $chest = trim($_POST["chest"]);
+        $abdomen = trim($_POST["abdomen"]);
+        $triceps = trim($_POST["triceps"]);
+        $suprailiac = trim($_POST["suprailiac"]);
 
-    /*
-    For females:
-    D = (1.0994921 - (0.0009929 x (Triceps + Thigh + Suprailiac)) + (0.0000023 x (Triceps + Thigh + Suprailiac)2) - (0.0001392 x Age))
+        /*
+        For females:
+        D = (1.0994921 - (0.0009929 x (Triceps + Thigh + Suprailiac)) + (0.0000023 x (Triceps + Thigh + Suprailiac)2) - (0.0001392 x Age))
 
-    For males:
-    D = (1.10938 - (0.0008267 x (Thigh + Chest + Abdomen)) + (0.0000016 x (Thigh + Chest + Abdomen)2) - (0.000257 x Age))
+        For males:
+        D = (1.10938 - (0.0008267 x (Thigh + Chest + Abdomen)) + (0.0000016 x (Thigh + Chest + Abdomen)2) - (0.000257 x Age))
 
-    Body density is transformed in fat percentage with the SIRI formula:
-    BF% = 495/ D - 450
-    Body fat is obtained from the BF% and subject weight based on:
-    Body fat mass = BF% x Weight / 100
-    Lean body mass = Weight – Body fat mass
-    */
+        Body density is transformed in fat percentage with the SIRI formula:
+        BF% = 495/ D - 450
+        Body fat is obtained from the BF% and subject weight based on:
+        Body fat mass = BF% x Weight / 100
+        Lean body mass = Weight – Body fat mass
+        */
 
-    if($gender == "male"){
-        $density = (1.10938 - (0.0008267 * ($thigh + $chest + $abdomen)) + (0.0000016 * pow(($thigh + $chest + $abdomen), 2)) - (0.000257 * $age));
-    }else{
-        $density = (1.0994921 - (0.0009929 * ($triceps + $thigh + $suprailiac)) + (0.0000023 * pow(($triceps + $thigh + $suprailiac), 2)) - (0.0001392 * $age));
-    }
-    $bodyFatPercentage = round((495 / $density - 450), 1);
-    $bodyFatMass = round(($bodyFatPercentage * $bodyFatWeight / 100), 1);
-    $leanBodyMass = round(($bodyFatWeight - $bodyFatMass), 1);
-    $bodyFatDiv = "
-    <div class='body-fat-result-container'>
-        <h3 onclick='slideIn(); this.style.display = \"none\";'>Click here to reveal your Body Fat Percentage</h3>
-        <div style='display: none' class='body-fat-result'>
-            <div>
-                <label>Body Fat Percentage: </label>$bodyFatPercentage%<br>
-                <label>Body Fat Mass: </label>$bodyFatMass lbs<br>
-                <label>Lean Body Mass: </label>$leanBodyMass lbs
+        if($gender == "male"){
+            $density = (1.10938 - (0.0008267 * ($thigh + $chest + $abdomen)) + (0.0000016 * pow(($thigh + $chest + $abdomen), 2)) - (0.000257 * $age));
+        }else{
+            $density = (1.0994921 - (0.0009929 * ($triceps + $thigh + $suprailiac)) + (0.0000023 * pow(($triceps + $thigh + $suprailiac), 2)) - (0.0001392 * $age));
+        }
+        $bodyFatPercentage = round((495 / $density - 450), 1);
+        $bodyFatMass = round(($bodyFatPercentage * $bodyFatWeight / 100), 1);
+        $leanBodyMass = round(($bodyFatWeight - $bodyFatMass), 1);
+        $bodyFatDiv = "
+        <div class='body-fat-result-container'>
+            <h3 onclick='slideIn(); this.style.display = \"none\";'>Click here to reveal your Body Fat Percentage</h3>
+            <div style='display: none' class='body-fat-result'>
+                <div>
+                    <label>Body Fat Percentage: </label>$bodyFatPercentage%<br>
+                    <label>Body Fat Mass: </label>$bodyFatMass lbs<br>
+                    <label>Lean Body Mass: </label>$leanBodyMass lbs
+                </div>
             </div>
-        </div>
-        <div class='running-img-container'>
-            <img src='images/running-stickman.gif'>
-        </div>
-    </div>";
+            <div class='running-img-container'>
+                <img src='images/running-stickman.gif'>
+            </div>
+        </div>";
+    }else{
+        // edit submit php
+        $findEntries = $db->select("SELECT id FROM daily_weight WHERE username = ?", [$username]);
+        if($findEntries->num_rows > 0){
+            while($row = $findEntries->fetch_assoc()){
+                $id = $row["id"];
+                if(isset($_POST["editButton$id"])){
+                    $errors = false;
+                    $errorTitle = "<span style='font-weight: bold;'>The form could not be submitted due to the following errors:</span>";
+                    $errorList = "";
+                    if(trim($_POST["{$id}_weight"]) != ""){
+                        $editWeight = trim($_POST["{$id}_weight"]);
+                        if(preg_match("/^\d*\.?\d*$/", $editWeight)){
+                            $editWeight = $weight->addDecimal($editWeight);
+                        }else{
+                            $errors = true;
+                            $errorList .= "<li>Weight must only contain numbers and up to 1 decimal</li>";
+                        }
+                    }else{
+                        $errors = true;
+                        $errorList .= "<li>Weight is a required field</li>";
+                    }
+                    date_default_timezone_set("America/Chicago");
+                    $editDateWeighed = $_POST["{$id}_date_weighed"] ?? "";
+                    if($editDateWeighed == ""){
+                        $errors = true;
+                        $errorList .= "<li>Date is a required field. Please fill it out.</li>";
+                    }
+                    if($editDateWeighed > date("Y-m-d")){
+                        $errors = true;
+                        $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
+                    }
+                    if(!$errors){
+                        if($db->write("UPDATE daily_weight SET pounds = ?, date_weighed = ? WHERE id = ?", [$editWeight, $editDateWeighed, $id])){
+                            $_SESSION["edit-success"] = "Successfully updated!";
+                            header("Location: {$_SESSION["home"]}");
+                        }else{
+                            // $db->error
+                            echo "<script>alert('Something went wrong while trying to update the entry');</script>";
+                        }
+                    }else{
+                        $edit_error_id = $id;
+                        $edit_error_msg = "<div class='error'>$errorTitle<ul>$errorList</ul></div>";
+                    }
+                }
+            }
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -190,19 +245,19 @@ if(isset($_POST["body-fat-submit"])){
                 <div id="input-error" class="error" style="display: none">
                     <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
                 </div>
-                <div>
+                <div">
                     <label for="date_entered">Date: </label>
                     <input required type="date" name="date_entered" id="date_entered" value="<?php echo $dateEntered; ?>" />
                 </div>
                 <input type="submit" name="weight-submit" id="weight-submit" value="Submit">
             </form>
         </div>
-        <?php $weight->display_weight($bodyFatDiv);?>
+        <?php $weight->display_weight($bodyFatDiv, $edit_error_id, $edit_error_msg, ["weight" => $editWeight, "date_weighed" => $editDateWeighed]);?>
     </div>
     <br><br><br>
 </body>
 </html>
-<script src="submit-button.js"></script>
+<script src="includes/dropdown-title.js"></script>
 <script>
     let weightInput = document.querySelector("#weight");
     weightInput.addEventListener("keyup", function(e){
@@ -249,8 +304,10 @@ if(isset($_POST["body-fat-submit"])){
             e.preventDefault();
             if(btn.classList.contains("body-fat-button")){
                 btn.parentElement.nextElementSibling.classList.remove("hidden");
+                btn.parentElement.nextElementSibling.firstElementChild.classList.add("active");
             }else{
                 btn.nextElementSibling.classList.remove("hidden");
+                btn.nextElementSibling.firstElementChild.classList.add("active");
             }
         });
     }
@@ -356,16 +413,4 @@ if(isset($_POST["body-fat-submit"])){
         let scroll = window.pageYOffset;
         window.location = "../delete.php?id = ";
     }
-    document.querySelector("#dropdown-title h1").addEventListener("click", function(){
-        document.querySelector("#dropdown-title-list").classList.toggle("hide-dropdown");
-        document.querySelector("#dropdown-title-list").classList.toggle("show-dropdown");
-    });
-    window.addEventListener("click", function(e){
-        if(document.querySelector("#dropdown-title-list").classList.contains("show-dropdown")){
-            if(e.target != document.querySelector("#dropdown-title-list") && e.target != document.querySelector("#dropdown-title h1")){
-                document.querySelector("#dropdown-title-list").classList.toggle("hide-dropdown");
-                document.querySelector("#dropdown-title-list").classList.toggle("show-dropdown");
-            }
-        }
-    });
 </script>

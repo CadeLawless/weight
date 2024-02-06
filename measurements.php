@@ -47,11 +47,24 @@ if(!isset($_SESSION["logged_in"])){
 ];
 echo serialize($array);
  */
+
+$pageno = $_GET["pageno"] ?? 1;
+$_SESSION["home"] = "measurements.php?pageno=$pageno#weight-history-title";
+
 // initialize form field variables
 $waist = "";
 $right_bicep = "";
 $left_bicep = "";
 $chest = "";
+$date_measured = date("Y-m-d");
+$edit_error_id = "";
+$edit_error_msg = "";
+$edit_waist = "";
+$edit_right_bicep = "";
+$edit_left_bicep = "";
+$edit_chest = "";
+$edit_waist = "";
+$edit_date_measured = "";
 
 function errorCheck($input, $inputName, $required="No", &$errors="", &$error_list=""){
     if(isset($_POST[$input]) && trim($_POST[$input]) != ""){
@@ -72,28 +85,72 @@ function patternCheck($regex, $input, &$errors, &$error_list, $inputName) {
     }
 }
 
-if (isset($_POST["submit_button"])){
-    $errors = false;
-    $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
-    $errorList = "";
-    $waist = errorCheck("waist", "Waist", "Yes", $errors, $errorList);
-    $right_bicep = errorCheck("right_bicep", "Right Bicep", "Yes", $errors, $errorList);
-    $left_bicep = errorCheck("left_bicep", "Left Bicep", "Yes", $errors, $errorList);
-    $chest = errorCheck("chest", "Chest", "Yes", $errors, $errorList);
-    patternCheck("/^\d*\.?\d*$/", $waist, $errors, $errorList, "Waist");
-    patternCheck("/^\d*\.?\d*$/", $right_bicep, $errors, $errorList, "Right Bicep");
-    patternCheck("/^\d*\.?\d*$/", $left_bicep, $errors, $errorList, "Left Bicep");
-    patternCheck("/^\d*\.?\d*$/", $chest, $errors, $errorList, "Chest");
-    $dateEntered = date("Y-m-d");
-    if(!$errors){
-        if($db->write("INSERT INTO daily_measurements(username, waist, right_bicep, left_bicep, chest, date_measured) VALUES(?, ?, ?, ?, ?, '$dateEntered')", "sssss", [$username, $waist, $right_bicep, $left_bicep, $chest])){
-            header("Location: measurements.php");
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if(isset($_POST["submit_button"])){
+        $errors = false;
+        $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
+        $errorList = "";
+        $waist = errorCheck("waist", "Waist", "Yes", $errors, $errorList);
+        $right_bicep = errorCheck("right_bicep", "Right Bicep", "Yes", $errors, $errorList);
+        $left_bicep = errorCheck("left_bicep", "Left Bicep", "Yes", $errors, $errorList);
+        $chest = errorCheck("chest", "Chest", "Yes", $errors, $errorList);
+        patternCheck("/^\d*\.?\d*$/", $waist, $errors, $errorList, "Waist");
+        patternCheck("/^\d*\.?\d*$/", $right_bicep, $errors, $errorList, "Right Bicep");
+        patternCheck("/^\d*\.?\d*$/", $left_bicep, $errors, $errorList, "Left Bicep");
+        patternCheck("/^\d*\.?\d*$/", $chest, $errors, $errorList, "Chest");
+        $date_measured = errorCheck("date_measured", "Date Measured", "Yes", $errors, $errorList);
+        if($date_measured > date("Y-m-d")){
+            $errors = true;
+            $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
+        }
+        if(!$errors){
+            if($db->write("INSERT INTO daily_measurements(username, waist, right_bicep, left_bicep, chest, date_measured) VALUES(?, ?, ?, ?, ?, ?)", [$username, $waist, $right_bicep, $left_bicep, $chest, $date_measured])){
+                header("Location: measurements.php");
+            }else{
+                echo "<script>alert('Something went wrong while trying to record these measurements')</script>";
+                // echo $db->error;
+            }
         }else{
-            echo "<script>alert('Something went wrong while trying to record these measurements')</script>";
-            // echo $db->error;
+            $errorMessage = "<div class='error' style='width: 100%;'>$errorTitle<ul>$errorList</ul></div>";
         }
     }else{
-        $errorMessage = "<div class='error' style='width: 100%;'>$errorTitle<ul>$errorList</ul></div>";
+        // edit submit php
+        $findEntries = $db->select("SELECT id FROM daily_measurements WHERE username = ?", [$username]);
+        if($findEntries->num_rows > 0){
+            while($row = $findEntries->fetch_assoc()){
+                $id = $row["id"];
+                if(isset($_POST["editButton$id"])){
+                    $errors = false;
+                    $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
+                    $errorList = "";
+                    $edit_waist = errorCheck("{$id}_waist", "Waist", "Yes", $errors, $errorList);
+                    $edit_right_bicep = errorCheck("{$id}_right_bicep", "Right Bicep", "Yes", $errors, $errorList);
+                    $edit_left_bicep = errorCheck("{$id}_left_bicep", "Left Bicep", "Yes", $errors, $errorList);
+                    $edit_chest = errorCheck("{$id}_chest", "Chest", "Yes", $errors, $errorList);
+                    patternCheck("/^\d*\.?\d*$/", $edit_waist, $errors, $errorList, "Waist");
+                    patternCheck("/^\d*\.?\d*$/", $edit_right_bicep, $errors, $errorList, "Right Bicep");
+                    patternCheck("/^\d*\.?\d*$/", $edit_left_bicep, $errors, $errorList, "Left Bicep");
+                    patternCheck("/^\d*\.?\d*$/", $edit_chest, $errors, $errorList, "Chest");
+                    $edit_date_measured = errorCheck("{$id}_date_measured", "Date Measured", "Yes", $errors, $errorList);
+                    if($edit_date_measured > date("Y-m-d")){
+                        $errors = true;
+                        $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
+                    }            
+                    if(!$errors){
+                        if($db->write("UPDATE daily_measurements SET waist = ?, right_bicep = ?, left_bicep = ?, chest = ?, date_measured = ? WHERE id = ?", [$edit_waist, $edit_right_bicep, $edit_left_bicep, $edit_chest, $edit_date_measured, $id])){
+                            $_SESSION["edit-success"] = "Successfully updated!";
+                            header("Location: {$_SESSION["home"]}");
+                        }else{
+                            // $db->error
+                            echo "<script>alert('Something went wrong while trying to update the entry');</script>";
+                        }
+                    }else{
+                        $edit_error_id = $id;
+                        $edit_error_msg = "<div class='error'>$errorTitle<ul>$errorList</ul></div>";
+                    }
+                }
+            }
+        }
     }
 }
 ?>
@@ -157,42 +214,65 @@ if (isset($_POST["submit_button"])){
                 <div>
                     <div class="measurement-input-container">
                         <label for="waist">Waist</label><br>
-                        <input type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $waist?>" maxlength="5" id="waist" name="waist" class="weight-form-input">
+                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $waist?>" maxlength="5" id="waist" name="waist" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>
                     <div class="measurement-input-container">
                         <label for="waist">Right Bicep</label><br>
-                        <input type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $right_bicep?>" maxlength="5" id="right_bicep" name="right_bicep" class="weight-form-input">
+                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $right_bicep?>" maxlength="5" id="right_bicep" name="right_bicep" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>
                     <div class="measurement-input-container">
                         <label for="waist">Left Bicep</label><br>
-                        <input type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $left_bicep?>" maxlength="5" id="left_bicep" name="left_bicep" class="weight-form-input">
+                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $left_bicep?>" maxlength="5" id="left_bicep" name="left_bicep" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>
                     <div class="measurement-input-container">
                         <label for="waist">Chest</label><br>
-                        <input type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $chest?>" maxlength="5" id="chest" name="chest" class="weight-form-input">
+                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $chest?>" maxlength="5" id="chest" name="chest" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>
-                </div>
-                <div id="input-error" class="error" style="display: none">
-                    <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
+                    <div class="center">
+                        <label for="date_measured">Date: </label>
+                        <input required required type="date" name="date_measured" id="date_measured" value="<?php echo $date_measured; ?>" />
+                    </div>
                 </div>
                 <input type="submit" name="submit_button" id="weight-submit" value="Submit">
             </form>
         </div>
-        <?php $weight->display_measurements()?>
+        <?php $weight->display_measurements($edit_error_id, $edit_error_msg, ["waist" => $edit_waist, "right_bicep" => $edit_right_bicep, "left_bicep" => $edit_left_bicep, "chest" => $edit_chest, "date_measured" => $edit_date_measured]); ?>
     </div>
     <br><br><br>
 </body>
 </html>
+<script src="includes/dropdown-title.js"></script>
 <script>
     <?php
     if(!isset($_GET["pageno"])){
         echo 'document.getElementById("waist").focus();';
     }
     ?>
+    // open edit popup for specified weight entry on click of edit button
+    for(const btn of document.querySelectorAll(".popup-button")){
+        btn.addEventListener("click", function(e){
+            e.preventDefault();
+            if(btn.classList.contains("body-fat-button")){
+                btn.parentElement.nextElementSibling.classList.remove("hidden");
+                btn.parentElement.nextElementSibling.firstElementChild.classList.add("active");
+            }else{
+                btn.nextElementSibling.classList.remove("hidden");
+                btn.nextElementSibling.firstElementChild.classList.add("active");
+            }
+        });
+    }
+
+    // close popup on click of x or no button
+    for(const x of document.querySelectorAll(".close-button, .no-button")){
+        x.addEventListener("click", function(){
+            x.closest(".popup-container").classList.add("hidden");
+        })
+    }
+
     for(const x of document.querySelectorAll(".delete-icon")){
         x.addEventListener("click", function(){
             let tr = x.parentElement.parentElement.parentElement.parentElement;
@@ -203,16 +283,4 @@ if (isset($_POST["submit_button"])){
         let scroll = window.pageYOffset;
         window.location = "../delete.php?id = ";
     }
-    document.querySelector("#dropdown-title h1").addEventListener("click", function(){
-        document.querySelector("#dropdown-title-list").classList.toggle("hide-dropdown");
-        document.querySelector("#dropdown-title-list").classList.toggle("show-dropdown");
-    });
-    window.addEventListener("click", function(e){
-        if(document.querySelector("#dropdown-title-list").classList.contains("show-dropdown")){
-            if(e.target != document.querySelector("#dropdown-title-list") && e.target != document.querySelector("#dropdown-title h1")){
-                document.querySelector("#dropdown-title-list").classList.toggle("hide-dropdown");
-                document.querySelector("#dropdown-title-list").classList.toggle("show-dropdown");
-            }
-        }
-    });
 </script>

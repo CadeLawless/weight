@@ -4,6 +4,9 @@
     font-weight: 300;
     -webkit-font-smoothing: antialiased;
 }
+strong {
+    font-weight: bold;
+}
 body {
     padding: 0;
     margin: 0;
@@ -69,6 +72,10 @@ label {
     color: rgb(171, 80, 5);
     border-bottom: 3px solid rgb(171, 80, 5);
 }
+.active-dropdown {
+    color: rgb(171, 80, 5);
+    border-bottom: 3px solid rgb(171, 80, 5) !important;
+}
 #down-caret {
     font-size: 45px;
     position: relative;
@@ -116,10 +123,6 @@ label {
     background-color: white;
     border: none;
     width: 30%;
-}
-.measurements-table th {
-    background-color: #ff7300;
-    text-align: center;
 }
 .swipe-row th {
     width: 30%;
@@ -304,7 +307,7 @@ input::-webkit-inner-spin-button {
 .popup-container {
     justify-content: center;
     position: fixed;
-    z-index: 100;
+    z-index: 1100;
     top: 0;
     left: 0;
     width: 100%;
@@ -312,19 +315,27 @@ input::-webkit-inner-spin-button {
     background-color: rgba(0, 0, 0, 0.316);
 }
 .popup {
+    color: black;
     width: 400px;
     max-width: 100%;
     max-height: 80vh;
     flex-grow: 0 !important;
     align-items: center;
     justify-content: center;
-    margin: 65px 15px 0;
+    margin: 0 15px;
     background-color: white;
     position: relative;
     border-radius: 5px;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     padding: 20px;
     overflow: auto;
+}
+.active {
+    animation: fadein 0.4s;
+}
+@keyframes fadein {
+    0% { opacity: 0; bottom: -100px; }
+    100% { opacity: 1; bottom: 0; }
 }
 .popup-content {
     text-align: left;
@@ -333,6 +344,13 @@ input::-webkit-inner-spin-button {
 .edit-form {
     width: 130px;
     margin: auto;
+    color: black;
+}
+.edit-form input:not(type=date) {
+    width: 75px;
+}
+.measurement-entry .edit-form {
+    width: 165px;
 }
 .close-container {
     position: absolute;
@@ -359,6 +377,26 @@ input::-webkit-inner-spin-button {
 }
 .close-button:active {
     top: 4px;
+}
+.no-button, .yes-button {
+    padding: 5px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: white;
+    cursor: pointer;
+}
+.no-button {
+    background-color: rgb(152, 0, 0);
+    margin-right: 40px;
+}
+.no-button:hover {
+    background-color: rgb(95, 0, 0);
+}
+.yes-button {
+    background-color: rgb(0, 105, 25);
+}
+.yes-button:hover {
+    background-color: rgb(0, 73, 17);
 }
 #label-after {
     font-size: 40px;
@@ -480,7 +518,7 @@ td.delete {
     padding: 0;
     right: -70px;
 }
-.delete-icon {
+.delete-icon, .edit-button {
     padding: 10px;
 }
 .delete-button {
@@ -499,9 +537,8 @@ td.delete {
 }
 .error {
     position: relative;
-    width: 85%;
     padding: 10px;
-    margin: auto;
+    margin: 15px auto;
     border-radius: 15px;
     border: solid 2px #960000;
     background-color: #ffadad;
@@ -616,14 +653,49 @@ td.delete {
 .hidden {
     display: none;
 }
-#date_entered {
+#date_entered, #date_measured {
     border: none;
     background-color: #dddddd;
     border-radius: 10px;
     padding: 5px;
 }
-.edit-weight {
-    width: 75px;
+.measurements-table {
+    margin: 25px 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border-bottom: 2px solid dodgerblue;
+}
+.flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+    border-left: 1px solid #ff7300;
+    border-right: 1px solid #ff7300;
+}
+.flex-row:last-child {
+    border-bottom: 1px solid #ff7300;
+}
+.measurement-entry {
+    margin-bottom: 15px;
+}
+.top-row {
+    background-color: #ff7300;
+    color: white;
+    padding: 0 10px;
+}
+.flex-row:nth-of-type(even):not(.top-row) {
+    background-color: #f3f3f3;
+}
+.flex-td {
+    flex-grow: 1;
+}
+.label-td {
+    text-transform: uppercase;
+    font-weight: bold;
+    text-align: left;
+}
+.measurement-td {
+    text-align: right;
 }
 @media (max-width: 880px){
     table {
@@ -643,5 +715,9 @@ td.delete {
     .slide-in {
         -webkit-animation: slide 1.8s forwards;
         animation: slide 1.8s forwards;
+    }
+    .popup {
+        width: 80%;
+        margin: 0;
     }
 }
