@@ -5,6 +5,11 @@ class DB{
     private $username = "root";
     private $password = "millieBean0514";
     private $database = "weight";
+    /* private $servername = "db5014008294.hosting-data.io";
+    private $username = "dbu17367";
+    private $password = "7pmSdg^r8AR7bDe%H8H3";
+    private $database = "dbs11710177"; */
+
 
     public function __construct()
     {

@@ -13,12 +13,16 @@ if(!isset($_SESSION["logged_in"])){
     // check if IP address is associated with a user 
     if(isset($_COOKIE["session_id"])){
         $session = $_COOKIE["session_id"];
-        $findUser = $db->select("SELECT username, session_expiration FROM users WHERE session = ?", [$session]);
+        $findUser = $db->select("SELECT username, gender, date_of_birth, session_expiration FROM users WHERE session = ?", [$session]);
         if($findUser->num_rows > 0){
             while($row = $findUser->fetch_assoc()){
                 $session_expiration = $row["session_expiration"];
                 if(date("Y-m-d H:i:s") < $session_expiration){
                     $username = $row["username"];
+                    $date_of_birth = $row["date_of_birth"];
+                    $gender = $row["gender"];
+                    $male = $gender == "Male" ? true : false;
+                    $female = $gender == "Female" ? true : false;
                     $_SESSION["logged_in"] = true;
                     $_SESSION["username"] = $username;
                 }else{
@@ -34,29 +38,57 @@ if(!isset($_SESSION["logged_in"])){
 }else{
     $username = $_SESSION["username"];
 }
-/* $array = [
-    ["ip_address" => $_SERVER["REMOTE_ADDR"], "last_login", date("Y-m-d H:i:s")]
-];
-echo serialize($array);
- */
 
 $pageno = $_GET["pageno"] ?? 1;
-$_SESSION["home"] = "measurements.php?pageno=$pageno#weight-history-title";
+$_SESSION["home"] = "body-fat.php?pageno=$pageno#weight-history-title";
 
 // initialize form field variables
-$waist = "";
-$right_bicep = "";
-$left_bicep = "";
-$chest = "";
-$date_measured = date("Y-m-d");
+$thigh = "";
+if($male){
+    $chest = "";
+    $abdomen = "";
+}
+if($female){
+    $triceps = "";
+    $suprailiac = "";
+}
+$body_fat_weight = "";
+// check to see if user has weighed today
+$findWeightToday = $db->select("SELECT pounds FROM daily_weight WHERE username = ? AND date_weighed = ?", [$username, date("Y-m-d")]);
+$weightEnteredToday = $findWeightToday->num_rows > 0 ? true : false;
+if($weightEnteredToday){
+    while($row = $findWeightToday->fetch_assoc()){
+        $body_fat_weight = $row["pounds"];
+    }
+}else{
+    $enter_weight = "No";
+}
+$date_calculated = date("Y-m-d");
+
+// function that calculates body fat
+function calculateBodyFatPercentage($male=false, $female=false, $thigh="", $chest="", $abdomen="", $triceps="", $suprailiac="", $age=""){
+    if($male){
+        $density = (1.10938 - (0.0008267 * ($thigh + $chest + $abdomen)) + (0.0000016 * pow(($thigh + $chest + $abdomen), 2)) - (0.000257 * $age));
+    }
+    if($female){
+        $density = (1.0994921 - (0.0009929 * ($triceps + $thigh + $suprailiac)) + (0.0000023 * pow(($triceps + $thigh + $suprailiac), 2)) - (0.0001392 * $age));
+    }
+    $bodyFatPercentage = round((495 / $density - 450), 1);
+    return $bodyFatPercentage;
+}
+
 $edit_error_id = "";
 $edit_error_msg = "";
-$edit_waist = "";
-$edit_right_bicep = "";
-$edit_left_bicep = "";
-$edit_chest = "";
-$edit_waist = "";
-$edit_date_measured = "";
+$edit_thigh = "";
+if($male){
+    $edit_chest = "";
+    $edit_abdomen = "";
+}
+if($female){
+    $edit_triceps = "";
+    $edit_suprailiac = "";
+}
+$edit_date_calculated = "";
 
 function errorCheck($input, $inputName, $required="No", &$errors="", &$error_list=""){
     if(isset($_POST[$input]) && trim($_POST[$input]) != ""){
@@ -82,10 +114,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $errors = false;
         $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
         $errorList = "";
-        $waist = errorCheck("waist", "Waist", "Yes", $errors, $errorList);
-        $right_bicep = errorCheck("right_bicep", "Right Bicep", "Yes", $errors, $errorList);
-        $left_bicep = errorCheck("left_bicep", "Left Bicep", "Yes", $errors, $errorList);
-        $chest = errorCheck("chest", "Chest", "Yes", $errors, $errorList);
+        $thigh = errorCheck("thigh", "Thigh", "Yes", $errors, $errorList);
+        if($male){
+            $chest = errorCheck("chesat", "Chest", "Yes", $errors, $errorList);
+            $abdomen = errorCheck("abdomen", "Abdomen", "Yes", $errors, $errorList);
+        }
+        if($female){
+            $triceps = errorCheck("triceps", "Triceps", "Yes", $errors, $errorList);
+            $suprailiac = errorCheck("suprailiac", "Suprailiac", "Yes", $errors, $errorList);
+        }
+        $body_fat_weight = errorCheck("body_fat_weight", "Weight", "Yes", $errors, $errorList);
         patternCheck("/^\d*\.?\d*$/", $waist, $errors, $errorList, "Waist");
         patternCheck("/^\d*\.?\d*$/", $right_bicep, $errors, $errorList, "Right Bicep");
         patternCheck("/^\d*\.?\d*$/", $left_bicep, $errors, $errorList, "Left Bicep");

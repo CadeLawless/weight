@@ -221,7 +221,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <?php include "includes/nav.php"?>
     <div class="flex">
         <div>
-        <div id="title-overlay"></div>
+            <div id="title-overlay"></div>
             <div id="title-container">
                 <div id="title-top"></div>
                 <h1 id="title-start">Daily </h1>
@@ -245,7 +245,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 <div id="input-error" class="error" style="display: none">
                     <p style="display: block; margin: auto; text-align: center;">Oops! You forgot to fill out this field.<br>(There is only one, silly)</p>
                 </div>
-                <div">
+                <div>
                     <label for="date_entered">Date: </label>
                     <input required type="date" name="date_entered" id="date_entered" value="<?php echo $dateEntered; ?>" />
                 </div>
