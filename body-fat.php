@@ -20,6 +20,7 @@ if(!isset($_SESSION["logged_in"])){
                 if(date("Y-m-d H:i:s") < $session_expiration){
                     $username = $row["username"];
                     $date_of_birth = $row["date_of_birth"];
+                    $age = date_diff(date_create($date_of_birth), date_create('now'))->y;
                     $gender = $row["gender"];
                     $male = $gender == "Male" ? true : false;
                     $female = $gender == "Female" ? true : false;
@@ -37,6 +38,19 @@ if(!isset($_SESSION["logged_in"])){
     }
 }else{
     $username = $_SESSION["username"];
+    $findUser = $db->select("SELECT gender, date_of_birth FROM users WHERE username = ?", [$username]);
+    if($findUser->num_rows > 0){
+        while($row = $findUser->fetch_assoc()){
+            $date_of_birth = $row["date_of_birth"];
+            $age = date_diff(date_create($date_of_birth), date_create('now'))->y;
+            $gender = $row["gender"];
+            $male = $gender == "Male" ? true : false;
+            $female = $gender == "Female" ? true : false;
+        }
+    }else{
+        header("Location: login.php");
+    }
+
 }
 
 $pageno = $_GET["pageno"] ?? 1;
@@ -88,6 +102,7 @@ if($female){
     $edit_triceps = "";
     $edit_suprailiac = "";
 }
+$edit_body_fat_weight = "";
 $edit_date_calculated = "";
 
 function errorCheck($input, $inputName, $required="No", &$errors="", &$error_list=""){
@@ -102,10 +117,16 @@ function errorCheck($input, $inputName, $required="No", &$errors="", &$error_lis
     }
 }
 
-function patternCheck($regex, $input, &$errors, &$error_list, $inputName) {
-    if(!preg_match($regex, $input)){
-        $errors = true;
-        $error_list .= "<li>$inputName must only contain numbers and up to 1 decimal</li>";
+function patternCheck($regex, $input, &$errors, &$error_list, $inputName, $weight=false) {
+    if($input != ""){
+        if(!preg_match($regex, $input)){
+            $errors = true;
+            if($weight){
+                $error_list .= "<li><em>Weight</em> must only contain numbers and up to 1 decimal</li>";
+            }else{
+                $error_list .= "<li><em>$inputName</em> may contain up to 2 whole numbers</li>";
+            }
+        }
     }
 }
 
@@ -114,38 +135,79 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $errors = false;
         $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
         $errorList = "";
+
         $thigh = errorCheck("thigh", "Thigh", "Yes", $errors, $errorList);
+        patternCheck("/^\d{1,2}$/", $thigh, $errors, $errorList, "Thigh");
+
         if($male){
-            $chest = errorCheck("chesat", "Chest", "Yes", $errors, $errorList);
+            $chest = errorCheck("chest", "Chest", "Yes", $errors, $errorList);
+            patternCheck("/^\d{1,2}$/", $chest, $errors, $errorList, "Chest");
+            
             $abdomen = errorCheck("abdomen", "Abdomen", "Yes", $errors, $errorList);
+            patternCheck("/^\d{1,2}$/", $abdomen, $errors, $errorList, "Abdomen");
         }
+
         if($female){
             $triceps = errorCheck("triceps", "Triceps", "Yes", $errors, $errorList);
+            patternCheck("/^\d{1,2}$/", $triceps, $errors, $errorList, "Triceps");
+
             $suprailiac = errorCheck("suprailiac", "Suprailiac", "Yes", $errors, $errorList);
+            patternCheck("/^\d{1,2}$/", $suprailiac, $errors, $errorList, "Suprailiac");
         }
+
         $body_fat_weight = errorCheck("body_fat_weight", "Weight", "Yes", $errors, $errorList);
-        patternCheck("/^\d*\.?\d*$/", $waist, $errors, $errorList, "Waist");
-        patternCheck("/^\d*\.?\d*$/", $right_bicep, $errors, $errorList, "Right Bicep");
-        patternCheck("/^\d*\.?\d*$/", $left_bicep, $errors, $errorList, "Left Bicep");
-        patternCheck("/^\d*\.?\d*$/", $chest, $errors, $errorList, "Chest");
-        $date_measured = errorCheck("date_measured", "Date Measured", "Yes", $errors, $errorList);
-        if($date_measured > date("Y-m-d")){
+        patternCheck("/^\d*\.?\d*$/", $body_fat_weight, $errors, $errorList, "Weight");
+        if(!$errors){
+            $body_fat_weight = $weight->addDecimal($body_fat_weight);
+        }
+
+        if(!$weightEnteredToday){
+            $enter_weight = isset($_POST["enter_weight"]) ? "Yes" : "No";
+        }
+
+        $date_calculated = errorCheck("date_calculated", "Date", "Yes", $errors, $errorList);
+        if($date_calculated > date("Y-m-d")){
             $errors = true;
             $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
         }
         if(!$errors){
-            if($db->write("INSERT INTO daily_measurements(username, waist, right_bicep, left_bicep, chest, date_measured) VALUES(?, ?, ?, ?, ?, ?)", [$username, $waist, $right_bicep, $left_bicep, $chest, $date_measured])){
-                header("Location: measurements.php");
-            }else{
-                echo "<script>alert('Something went wrong while trying to record these measurements')</script>";
-                // echo $db->error;
+            if($male){
+                $bodyFatPercentage = calculateBodyFatPercentage(male: true, thigh: $thigh, chest: $chest, abdomen: $abdomen, age: $age);
+            }elseif($female){
+                $bodyFatPercentage = calculateBodyFatPercentage(female: true, thigh: $thigh, triceps: $triceps, suprailiac: $suprailiac, age: $age);
+            }
+            $bodyFatMass = round(($bodyFatPercentage * $body_fat_weight / 100), 1);
+            $leanBodyMass = round(($body_fat_weight - $bodyFatMass), 1);
+            
+            if(!$weightEnteredToday && $enter_weight == "Yes"){
+                if(!$db->write("INSERT INTO daily_weight (username, pounds, date_weighed) VALUES (?, ?, ?)", [$username, $body_fat_weight, date("Y-m-d")])){
+                    $errors = true;
+                }
+            }
+
+            if(!$errors){
+                if($male){
+                    if($db->write("INSERT INTO daily_body_fat(username, thigh, chest, abdomen, weight, percentage, body_fat_mass, lean_body_mass, date_calculated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", [$username, $thigh, $chest, $abdomen, $body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $date_calculated])){
+                        header("Location: body-fat.php");
+                    }else{
+                        echo "<script>alert('Something went wrong while trying to record this body fat percentage')</script>";
+                        // echo $db->error;
+                    }
+                }elseif($female){
+                    if($db->write("INSERT INTO daily_body_fat(username, thigh, triceps, suprailiac, weight, percentage, body_fat_mass, lean_body_mass, date_calculated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", [$username, $thigh, $triceps, $suprailiac, $body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $date_calculated])){
+                        header("Location: body-fat.php");
+                    }else{
+                        echo "<script>alert('Something went wrong while trying to record this body fat percentage')</script>";
+                        // echo $db->error;
+                    }
+                }
             }
         }else{
             $errorMessage = "<div class='error' style='width: 100%;'>$errorTitle<ul>$errorList</ul></div>";
         }
     }else{
         // edit submit php
-        $findEntries = $db->select("SELECT id FROM daily_measurements WHERE username = ?", [$username]);
+        $findEntries = $db->select("SELECT id FROM daily_body_fat WHERE username = ?", [$username]);
         if($findEntries->num_rows > 0){
             while($row = $findEntries->fetch_assoc()){
                 $id = $row["id"];
@@ -153,26 +215,59 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     $errors = false;
                     $errorTitle = "<p>The form could not be submitted due to the following errors:</p>";
                     $errorList = "";
-                    $edit_waist = errorCheck("{$id}_waist", "Waist", "Yes", $errors, $errorList);
-                    $edit_right_bicep = errorCheck("{$id}_right_bicep", "Right Bicep", "Yes", $errors, $errorList);
-                    $edit_left_bicep = errorCheck("{$id}_left_bicep", "Left Bicep", "Yes", $errors, $errorList);
-                    $edit_chest = errorCheck("{$id}_chest", "Chest", "Yes", $errors, $errorList);
-                    patternCheck("/^\d*\.?\d*$/", $edit_waist, $errors, $errorList, "Waist");
-                    patternCheck("/^\d*\.?\d*$/", $edit_right_bicep, $errors, $errorList, "Right Bicep");
-                    patternCheck("/^\d*\.?\d*$/", $edit_left_bicep, $errors, $errorList, "Left Bicep");
-                    patternCheck("/^\d*\.?\d*$/", $edit_chest, $errors, $errorList, "Chest");
-                    $edit_date_measured = errorCheck("{$id}_date_measured", "Date Measured", "Yes", $errors, $errorList);
-                    if($edit_date_measured > date("Y-m-d")){
+
+                    $edit_thigh = errorCheck("{$id}_thigh", "Thigh", "Yes", $errors, $errorList);
+                    patternCheck("/^\d{1,2}$/", $thigh, $errors, $errorList, "Thigh");
+            
+                    if($male){
+                        $edit_chest = errorCheck("{$id}_chest", "Chest", "Yes", $errors, $errorList);
+                        patternCheck("/^\d{1,2}$/", $chest, $errors, $errorList, "Chest");
+                        
+                        $edit_abdomen = errorCheck("{$id}_abdomen", "Abdomen", "Yes", $errors, $errorList);
+                        patternCheck("/^\d{1,2}$/", $abdomen, $errors, $errorList, "Abdomen");
+                    }
+            
+                    if($female){
+                        $edit_triceps = errorCheck("{$id}_triceps", "Triceps", "Yes", $errors, $errorList);
+                        patternCheck("/^\d{1,2}$/", $triceps, $errors, $errorList, "Triceps");
+            
+                        $edit_suprailiac = errorCheck("{$id}_suprailiac", "Suprailiac", "Yes", $errors, $errorList);
+                        patternCheck("/^\d{1,2}$/", $suprailiac, $errors, $errorList, "Suprailiac");
+                    }
+            
+                    $edit_body_fat_weight = errorCheck("{$id}_body_fat_weight", "Weight", "Yes", $errors, $errorList);
+                    patternCheck("/^\d*\.?\d*$/", $body_fat_weight, $errors, $errorList, "Weight");
+                        
+                    $edit_body_fat_weight = errorCheck("{$id}_date_calculated", "Date", "Yes", $errors, $errorList);
+                    if($edit_body_fat_weight > date("Y-m-d")){
                         $errors = true;
                         $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
-                    }            
+                    }
                     if(!$errors){
-                        if($db->write("UPDATE daily_measurements SET waist = ?, right_bicep = ?, left_bicep = ?, chest = ?, date_measured = ? WHERE id = ?", [$edit_waist, $edit_right_bicep, $edit_left_bicep, $edit_chest, $edit_date_measured, $id])){
-                            $_SESSION["edit-success"] = "Successfully updated!";
-                            header("Location: {$_SESSION["home"]}");
-                        }else{
-                            // $db->error
-                            echo "<script>alert('Something went wrong while trying to update the entry');</script>";
+                        if($male){
+                            $bodyFatPecentage = calculateBodyFatPercentage(male: true, thigh: $edit_thigh, chest: $edit_chest, abdomen: $edit_abdomen, age: $age);
+                        }elseif($female){
+                            $bodyFatPecentage = calculateBodyFatPercentage(female: true, thigh: $edit_thigh, triceps: $edit_triceps, suprailiac: $edit_suprailiac, age: $age);
+                        }
+                        $bodyFatMass = round(($bodyFatPercentage * $body_fat_weight / 100), 1);
+                        $leanBodyMass = round(($body_fat_weight - $bodyFatMass), 1);
+            
+                        if($male){
+                            if($db->write("UPDATE daily_body_weight SET thigh = ?, chest = ?, abdomen = ?, weight = ?, percentage = ?, body_fat_mass = ?, lean_body_mass = ?, date_calculated = ? WHERE id = ?", [$edit_thigh, $edit_chest, $edit_abdomen, $edit_body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $edit_date_calculated, $id])){
+                                $_SESSION["edit-success"] = "Successfully updated!";
+                                header("Location: {$_SESSION["home"]}");
+                            }else{
+                                // $db->error
+                                echo "<script>alert('Something went wrong while trying to update the entry');</script>";
+                            }
+                        }elseif($female){
+                            if($db->write("UPDATE daily_body_weight SET thigh = ?, triceps = ?, suprailiac = ?, weight = ?, percentage = ?, body_fat_mass = ?, lean_body_mass = ?, date_calculated = ? WHERE id = ?", [$edit_thigh, $edit_triceps, $edit_suprailiac, $edit_body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $edit_date_calculated, $id])){
+                                $_SESSION["edit-success"] = "Successfully updated!";
+                                header("Location: {$_SESSION["home"]}");
+                            }else{
+                                // $db->error
+                                echo "<script>alert('Something went wrong while trying to update the entry');</script>";
+                            }
                         }
                     }else{
                         $edit_error_id = $id;
@@ -231,10 +326,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 <div id="title-top"></div>
                 <h1 id="title-start">Daily </h1>
                 <div id="dropdown-title">
-                    <h1>Measurements <span id="down-caret">&#8964;</span></h1>
+                    <h1>Body Fat <span id="down-caret">&#8964;</span></h1>
                     <ul id="dropdown-title-list" class="hide-dropdown">
                         <li><a href="index.php">Weight</a></li>
-                        <li><a href="body-fat.php">Body Fat %</a></li>
+                        <li><a href="measurements.php">Measurements</a></li>
                     </ul>
                 </div>
             </div>
@@ -243,34 +338,59 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 <?php if(isset($errorMessage)) echo $errorMessage?>
                 <div>
                     <div class="measurement-input-container">
-                        <label for="waist">Waist</label><br>
-                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $waist?>" maxlength="5" id="waist" name="waist" class="weight-form-input">
-                        <div id="label-after">in</div>
+                        <label for="thigh">Thigh</label><br>
+                        <input required type="text" inputmode="decimal" pattern="^\d{1,2}$" value="<?php echo $thigh?>" maxlength="2" id="thigh" name="thigh" class="weight-form-input">
+                        <div id="label-after">mm</div>
                     </div>
-                    <div class="measurement-input-container">
-                        <label for="waist">Right Bicep</label><br>
-                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $right_bicep?>" maxlength="5" id="right_bicep" name="right_bicep" class="weight-form-input">
-                        <div id="label-after">in</div>
-                    </div>
-                    <div class="measurement-input-container">
-                        <label for="waist">Left Bicep</label><br>
-                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $left_bicep?>" maxlength="5" id="left_bicep" name="left_bicep" class="weight-form-input">
-                        <div id="label-after">in</div>
-                    </div>
-                    <div class="measurement-input-container">
-                        <label for="waist">Chest</label><br>
-                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $chest?>" maxlength="5" id="chest" name="chest" class="weight-form-input">
-                        <div id="label-after">in</div>
+                    <?php if($male){ ?>
+                        <div class="measurement-input-container">
+                            <label for="chest">Chest</label><br>
+                            <input required type="text" inputmode="decimal" pattern="^\d{1,2}$" value="<?php echo $chest?>" maxlength="2" id="chest" name="chest" class="weight-form-input">
+                            <div id="label-after">mm</div>
+                        </div>
+                        <div class="measurement-input-container">
+                            <label for="abdomen">Abdomen</label><br>
+                            <input required type="text" inputmode="decimal" pattern="^\d{1,2}$" value="<?php echo $abdomen?>" maxlength="2" id="abdomen" name="abdomen" class="weight-form-input">
+                            <div id="label-after">mm</div>
+                        </div>
+                    <?php }elseif($female){ ?>
+                        <div class="measurement-input-container">
+                            <label for="triceps">Triceps</label><br>
+                            <input required type="text" inputmode="decimal" pattern="^\d{1,2}$" value="<?php echo $triceps?>" maxlength="2" id="triceps" name="triceps" class="weight-form-input">
+                            <div id="label-after">mm</div>
+                        </div>
+                        <div class="measurement-input-container">
+                            <label for="suprailiac">Suprailiac</label><br>
+                            <input required type="text" inputmode="decimal" pattern="^\d{1,2}$" value="<?php echo $suprailiac?>" maxlength="2" id="suprailiac" name="suprailiac" class="weight-form-input">
+                            <div id="label-after">mm</div>
+                        </div>
+                    <?php } ?>
+                    <div class="measurement-input-container" style="<?php if(!$weightEnteredToday) echo "margin-bottom: 85px;"; ?>">
+                        <label for="body_fat_weight">Weight</label><br>
+                        <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $body_fat_weight?>" maxlength="5" id="body_fat_weight" name="body_fat_weight" class="weight-form-input">
+                        <div id="label-after">lbs</div>
+                        <?php if(!$weightEnteredToday){ ?>
+                            <div class="center">
+                                <input style="margin-top: 10px;" type="checkbox" name="enter_weight" id="enter_weight" <?php if($enter_weight == "Yes") echo "checked"; ?> />
+                                <label style="font-size: 16px;" for="enter_weight">Add as weight entry for today</label>
+                            </div>
+                        <?php } ?>
                     </div>
                     <div class="center">
-                        <label for="date_measured">Date: </label>
-                        <input required required type="date" name="date_measured" id="date_measured" value="<?php echo $date_measured; ?>" />
+                        <label for="date_calculated">Date: </label>
+                        <input required type="date" name="date_calculated" id="date_calculated" value="<?php echo $date_calculated; ?>" />
                     </div>
                 </div>
                 <input type="submit" name="submit_button" id="weight-submit" value="Submit">
             </form>
         </div>
-        <?php $weight->display_measurements($edit_error_id, $edit_error_msg, ["waist" => $edit_waist, "right_bicep" => $edit_right_bicep, "left_bicep" => $edit_left_bicep, "chest" => $edit_chest, "date_measured" => $edit_date_measured]); ?>
+        <?php 
+        if($male){
+            $weight->display_body_fat(male: true, edit_error_id: $edit_error_id, edit_error_msg: $edit_error_msg, edit_input_array: ["thigh" => $edit_thigh, "chest" => $edit_chest, "abdomen" => $edit_abdomen, "weight" => $edit_body_fat_weight, "date_calculated" => $edit_date_calculated]);
+        }elseif($female){
+            $weight->display_body_fat(female: true, edit_error_id: $edit_error_id, edit_error_msg: $edit_error_msg, edit_input_array: ["thigh" => $edit_thigh, "triceps" => $edit_triceps, "suprailiac" => $edit_suprailiac, "weight" => $edit_body_fat_weight, "date_calculated" => $edit_date_calculated]);
+        }
+        ?>
     </div>
     <br><br><br>
 </body>
@@ -279,7 +399,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 <script>
     <?php
     if(!isset($_GET["pageno"])){
-        echo 'document.getElementById("waist").focus();';
+        echo 'document.getElementById("thigh").focus();';
     }
     ?>
     // open edit popup for specified weight entry on click of edit button

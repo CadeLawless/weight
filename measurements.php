@@ -196,7 +196,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     <h1>Measurements <span id="down-caret">&#8964;</span></h1>
                     <ul id="dropdown-title-list" class="hide-dropdown">
                         <li><a href="index.php">Weight</a></li>
-                        <li><a href="body-fat.php">Body Fat %</a></li>
+                        <li><a href="body-fat.php">Body Fat</a></li>
                     </ul>
                 </div>
             </div>
@@ -210,17 +210,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                         <div id="label-after">in</div>
                     </div>
                     <div class="measurement-input-container">
-                        <label for="waist">Right Bicep</label><br>
+                        <label for="right_bicep">Right Bicep</label><br>
                         <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $right_bicep?>" maxlength="5" id="right_bicep" name="right_bicep" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>
                     <div class="measurement-input-container">
-                        <label for="waist">Left Bicep</label><br>
+                        <label for="left_bicep">Left Bicep</label><br>
                         <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $left_bicep?>" maxlength="5" id="left_bicep" name="left_bicep" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>
                     <div class="measurement-input-container">
-                        <label for="waist">Chest</label><br>
+                        <label for="chest">Chest</label><br>
                         <input required type="text" inputmode="decimal" pattern="^\d*\.?\d*$" value="<?php echo $chest?>" maxlength="5" id="chest" name="chest" class="weight-form-input">
                         <div id="label-after">in</div>
                     </div>

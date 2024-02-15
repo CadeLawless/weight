@@ -229,7 +229,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     <h1>Weight <span id="down-caret">&#8964;</span></h1>
                     <ul id="dropdown-title-list" class="hide-dropdown">
                         <li><a href="measurements.php">Measurements</a></li>
-                        <li><a href="body-fat.php">Body Fat %</a></li>
+                        <li><a href="body-fat.php">Body Fat</a></li>
                     </ul>
                 </div>
             </div>

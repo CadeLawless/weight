@@ -56,7 +56,7 @@ class DB{
     }
 }
 class Pagination {
-    public static function paginate($type, $db, $query, $itemsPerPage, $pageNumber, $bodyFatDiv="", $editErrorID="", $editErrorMsg="", $editInputArray=[]){
+    public static function paginate($type, $db, $query, $itemsPerPage, $pageNumber, $bodyFatDiv="", $editErrorID="", $editErrorMsg="", $editInputArray=[], $male=false, $female=false){
         $offset = ($pageNumber - 1) * $itemsPerPage;
         $selectQuery = $db->query("$query LIMIT $offset, $itemsPerPage");
         if($selectQuery->num_rows > 0){
@@ -239,7 +239,7 @@ class Pagination {
                                                                 <div class='input-container'>
                                                                     <input class='edit-weight' type='text' inputmode='decimal' value='";
                                                                     echo $id == $editErrorID ? $editInputArray["weight"] : $weight;
-                                                                    echo "' maxlength='5' id='weight$id' name='{$id}_weight'> <span>lbs</span>
+                                                                    echo "' maxlength='5' pattern='^\d*\.?\d*$' id='weight$id' name='{$id}_weight'> <span>lbs</span>
                                                                 </div>
                                                             </div>
                                                             <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
@@ -294,25 +294,25 @@ class Pagination {
                                                                 <div class='input-container'>
                                                                     <input class='edit-waist' type='text' inputmode='decimal' value='";
                                                                     echo $id == $editErrorID ? $editInputArray["waist"] : $waist;
-                                                                    echo "' maxlength='5' id='waist$id' name='{$id}_waist'> <span>in</span>
+                                                                    echo "' maxlength='5' pattern='^\d*\.?\d*$' id='waist$id' name='{$id}_waist'> <span>in</span>
                                                                 </div>
                                                                 <div class='input-container'>
                                                                     <label for='right_bicep$id'>Right Bicep:<br></label>
                                                                     <input class='edit-right_bicep' type='text' inputmode='decimal' value='";
                                                                     echo $id == $editErrorID ? $editInputArray["right_bicep"] : $right_bicep;
-                                                                    echo "' maxlength='5' id='right_bicep$id' name='{$id}_right_bicep'> <span>in</span>
+                                                                    echo "' maxlength='5' pattern='^\d*\.?\d*$' id='right_bicep$id' name='{$id}_right_bicep'> <span>in</span>
                                                                 </div>
                                                                 <div class='input-container'>
                                                                     <label for='left_bicep$id'>Left Bicep:<br></label>
                                                                     <input class='edit-left_bicep' type='text' inputmode='decimal' value='";
                                                                     echo $id == $editErrorID ? $editInputArray["left_bicep"] : $left_bicep;
-                                                                    echo "' maxlength='5' id='left_bicep$id' name='{$id}_left_bicep'> <span>in</span>
+                                                                    echo "' maxlength='5' pattern='^\d*\.?\d*$' id='left_bicep$id' name='{$id}_left_bicep'> <span>in</span>
                                                                 </div>
                                                                 <div class='input-container'>
                                                                     <label for='chest$id'>Chest:<br></label>
                                                                     <input class='edit-chest' type='text' inputmode='decimal' value='";
                                                                     echo $id == $editErrorID ? $editInputArray["chest"] : $chest;
-                                                                    echo "' maxlength='5' id='chest$id' name='{$id}_chest'> <span>in</span>
+                                                                    echo "' maxlength='5' pattern='^\d*\.?\d*$' id='chest$id' name='{$id}_chest'> <span>in</span>
                                                                 </div>
                                                             </div>
                                                             <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
@@ -356,6 +356,179 @@ class Pagination {
                                     <div class='flex-row'>
                                         <div class='flex-td label-td'>Chest</div>
                                         <div class='flex-td measurement-td'>$chest in</div>
+                                    </div>
+                                </div>";
+                            }
+                            echo "</div>";
+                        }
+                }else if($type == "Body Fat"){
+                    if($selectQuery->num_rows > 0){
+                        echo "
+                        <div class='history'>
+                            <h2 id='weight-history-title' align='center'>Body Fat History</h2>
+                            <div class='measurements-table'>";
+                            while($row = $selectQuery->fetch_assoc()){
+                                $id = $row["id"];
+                                $thigh = htmlspecialchars($row["thigh"]);
+                                if($male){
+                                    $chest = htmlspecialchars($row["chest"]);
+                                    $abdomen = htmlspecialchars($row["abdomen"]);
+                                }
+                                if($female){
+                                    $triceps = htmlspecialchars($row["triceps"]);
+                                    $suprailiac = htmlspecialchars($row["suprailiac"]);
+                                }
+                                $body_fat_weight = htmlspecialchars($row["weight"]);
+                                $percentage = $row["percentage"];
+                                $body_fat_mass = $row["body_fat_mass"];
+                                $lean_body_mass = $row["lean_body_mass"];
+                                $date_calculated = date("n/j/Y", strtotime($row["date_calculated"]));
+                                echo "
+                                <div class='measurement-entry'>
+                                    <div class='flex-row top-row'>
+                                        <div class='flex-td label-td'>$date_calculated</div>
+                                        <div class='flex-td measurement-td'>
+                                            <img class='edit-button popup-button' src='images/edit-white.png' style='cursor: pointer; width: 15px; height: 15px;'>
+                                            <div class='popup-container edit-popup-$id flex";
+                                            if($id != $editErrorID) echo " hidden";
+                                            echo "'>
+                                                <div class='popup flex'>
+                                                    <div class='close-container'>
+                                                        <img src='images/close.png' class='close-button'>
+                                                    </div>
+                                                    <div class='popup-content'>";
+                                                        if($id == $editErrorID) echo $editErrorMsg;
+                                                        echo "
+                                                        <form class='edit-form' method='POST' action=''>
+                                                            <div style='margin: auto;'>
+                                                                <label for='date_measured$id'>Date Calculated:<br></label>
+                                                                <input type='date' value='";
+                                                                echo $id == $editErrorID ? $editInputArray["date_calculated"] : date("Y-m-d", strtotime($row["date_calculated"]));
+                                                                echo "' id='date_calculated$id' name='{$id}_date_calculated'><br>
+                                                                <div class='input-container'>
+                                                                    <label for='thigh$id'>Thigh:<br></label>
+                                                                    <input class='edit-thigh' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["thigh"] : $thigh;
+                                                                    echo "' maxlength='2' pattern='^\d{1,2}$' id='thigh$id' name='{$id}_thigh'>
+                                                                    <span>mm</span>
+                                                                </div>";
+                                                                if($male){
+                                                                    echo "
+                                                                    <div class='input-container'>
+                                                                        <label for='chest$id'>Chest:<br></label>
+                                                                        <input class='edit-chest' type='text' inputmode='decimal' value='";
+                                                                        echo $id == $editErrorID ? $editInputArray["chest"] : $chest;
+                                                                        echo "' maxlength='2' pattern='^\d{1,2}$' id='chest$id' name='{$id}_chest'>
+                                                                        <span>mm</span>
+                                                                    </div>
+                                                                    <div class='input-container'>
+                                                                        <label for='abdomen$id'>Abdomen:<br></label>
+                                                                        <input class='edit-abdomen' type='text' inputmode='decimal' value='";
+                                                                        echo $id == $editErrorID ? $editInputArray["abdomen"] : $abdomen;
+                                                                        echo "' maxlength='2' pattern='^\d{1,2}$' id='abdomen$id' name='{$id}_abdomen'>
+                                                                        <span>mm</span>
+                                                                    </div>";
+                                                                }
+                                                                if($female){
+                                                                    echo "
+                                                                    <div class='input-container'>
+                                                                        <label for='triceps$id'>Triceps:<br></label>
+                                                                        <input class='edit-triceps' type='text' inputmode='decimal' value='";
+                                                                        echo $id == $editErrorID ? $editInputArray["triceps"] : $triceps;
+                                                                        echo "' maxlength='2' pattern='^\d{1,2}$' id='triceps$id' name='{$id}_triceps'>
+                                                                        <span>mm</span>
+                                                                    </div>
+                                                                    <div class='input-container'>
+                                                                        <label for='suprailiac$id'>Suprailiac:<br></label>
+                                                                        <input class='edit-suprailiac' type='text' inputmode='decimal' value='";
+                                                                        echo $id == $editErrorID ? $editInputArray["suprailiac"] : $suprailiac;
+                                                                        echo "' maxlength='2' pattern='^\d{1,2}$' id='suprailiac$id' name='{$id}_suprailiac'>
+                                                                        <span>mm</span>
+                                                                    </div>";
+                                                                }
+                                                                echo "
+                                                                <div class='input-container'>
+                                                                    <label for='body_fat_weight$id'>Weight:<br></label>
+                                                                    <input class='edit-body_fat_weight' type='text' inputmode='decimal' value='";
+                                                                    echo $id == $editErrorID ? $editInputArray["weight"] : $body_fat_weight;
+                                                                    echo "' maxlength='5' pattern='^\d*\.?\d*$' id='body_fat_weight$id' name='{$id}_body_fat_weight'> <span>lbs</span>
+                                                                </div>
+                                                            </div>
+                                                            <p class='center'><input type='submit' name='editButton$id' class='edit_submit'></p>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <img class='delete-icon popup-button' src='images/delete-white.png' style='cursor: pointer; width: 15px; height: 15px;'>
+                                            <div class='popup-container delete-popup-$id flex hidden'>
+                                                <div class='popup flex'>
+                                                    <div class='close-container'>
+                                                        <img src='images/close.png' class='close-button'>
+                                                    </div>
+                                                    <div class='popup-content'>
+                                                        <p><strong>Are you sure you want to delete this entry?</strong></p>
+                                                        <p>
+                                                            <span>Date Calculated: $date_calculated</span><br />
+                                                            <span>Thigh: $thigh mm</span><br />";
+                                                            if($male){
+                                                                echo "                                                            <span>Chest: $chest mm</span><br />
+                                                                <span>Abdomen: $abdomen mm</span><br />";
+                                                            }
+                                                            if($female){
+                                                                echo "                                                            <span>Triceps: $triceps mm</span><br />
+                                                                <span>Suprailiac: $suprailiac mm</span><br />";
+                                                            }
+                                                            echo "
+                                                            <span>Weight: $body_fat_weight lbs</span><br />
+                                                        </p>
+                                                        <p class='center'><a class='no-button'>No</a><a class='yes-button' href='delete-body-fat.php?id=$id'>Yes</a></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Thigh</div>
+                                        <div class='flex-td measurement-td'>$thigh mm</div>
+                                    </div>";
+                                    if($male){
+                                        echo "                                    
+                                        <div class='flex-row'>
+                                            <div class='flex-td label-td'>Chest</div>
+                                            <div class='flex-td measurement-td'>$chest mm</div>
+                                        </div>
+                                        <div class='flex-row'>
+                                            <div class='flex-td label-td'>Abdomen</div>
+                                            <div class='flex-td measurement-td'>$abdomen mm</div>
+                                        </div>";
+                                    }
+                                    if($female){
+                                        echo "                                    
+                                        <div class='flex-row'>
+                                            <div class='flex-td label-td'>Triceps</div>
+                                            <div class='flex-td measurement-td'>$triceps mm</div>
+                                        </div>
+                                        <div class='flex-row'>
+                                            <div class='flex-td label-td'>Suprailiac</div>
+                                            <div class='flex-td measurement-td'>$suprailiac mm</div>
+                                        </div>";
+                                    }
+                                    echo "
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Weight</div>
+                                        <div class='flex-td measurement-td'>$body_fat_weight lbs</div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Body Fat %</div>
+                                        <div class='flex-td measurement-td'>$percentage%</div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Body Fat Mass</div>
+                                        <div class='flex-td measurement-td'>$body_fat_mass lbs</div>
+                                    </div>
+                                    <div class='flex-row'>
+                                        <div class='flex-td label-td'>Lean Body Mass</div>
+                                        <div class='flex-td measurement-td'>$lean_body_mass lbs</div>
                                     </div>
                                 </div>";
                             }
@@ -452,6 +625,14 @@ class Weight {
     public function display_measurements($edit_error_id, $edit_error_msg, $edit_input_array=[]){
         $pageno = $_GET["pageno"] ?? 1;
         Pagination::paginate(type: "Measurements", db: $this->db, query: "SELECT * FROM daily_measurements WHERE username = '{$_SESSION["username"]}' ORDER BY date_measured DESC", itemsPerPage: 3, pageNumber: $pageno, editErrorID: $edit_error_id, editErrorMsg: $edit_error_msg, editInputArray: $edit_input_array);
+    }
+    public function display_body_fat($edit_error_id, $edit_error_msg, $edit_input_array=[], $male=false, $female=false){
+        $pageno = $_GET["pageno"] ?? 1;
+        if($male){
+            Pagination::paginate(male: true, type: "Body Fat", db: $this->db, query: "SELECT * FROM daily_body_fat WHERE username = '{$_SESSION["username"]}' ORDER BY date_calculated DESC", itemsPerPage: 3, pageNumber: $pageno, editErrorID: $edit_error_id, editErrorMsg: $edit_error_msg, editInputArray: $edit_input_array);
+        }elseif($female){
+            Pagination::paginate(female: true, type: "Body Fat", db: $this->db, query: "SELECT * FROM daily_body_fat WHERE username = '{$_SESSION["username"]}' ORDER BY date_calculated DESC", itemsPerPage: 3, pageNumber: $pageno, editErrorID: $edit_error_id, editErrorMsg: $edit_error_msg, editInputArray: $edit_input_array);
+        }
     }
 }
 ?>

@@ -665,7 +665,7 @@ td.delete {
 .hidden {
     display: none;
 }
-#date_entered, #date_measured {
+#date_entered, #date_measured, #date_calculated {
     border: none;
     background-color: #dddddd;
     border-radius: 10px;
