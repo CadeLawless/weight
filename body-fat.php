@@ -238,22 +238,22 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     $edit_body_fat_weight = errorCheck("{$id}_body_fat_weight", "Weight", "Yes", $errors, $errorList);
                     patternCheck("/^\d*\.?\d*$/", $body_fat_weight, $errors, $errorList, "Weight");
                         
-                    $edit_body_fat_weight = errorCheck("{$id}_date_calculated", "Date", "Yes", $errors, $errorList);
-                    if($edit_body_fat_weight > date("Y-m-d")){
+                    $edit_date_calculated = errorCheck("{$id}_date_calculated", "Date", "Yes", $errors, $errorList);
+                    if($edit_date_calculated > date("Y-m-d")){
                         $errors = true;
                         $errorList .= "<li>Date cannot be in the future. Please enter a valid date.</li>";
                     }
                     if(!$errors){
                         if($male){
-                            $bodyFatPecentage = calculateBodyFatPercentage(male: true, thigh: $edit_thigh, chest: $edit_chest, abdomen: $edit_abdomen, age: $age);
+                            $bodyFatPercentage = calculateBodyFatPercentage(male: true, thigh: $edit_thigh, chest: $edit_chest, abdomen: $edit_abdomen, age: $age);
                         }elseif($female){
-                            $bodyFatPecentage = calculateBodyFatPercentage(female: true, thigh: $edit_thigh, triceps: $edit_triceps, suprailiac: $edit_suprailiac, age: $age);
+                            $bodyFatPercentage = calculateBodyFatPercentage(female: true, thigh: $edit_thigh, triceps: $edit_triceps, suprailiac: $edit_suprailiac, age: $age);
                         }
                         $bodyFatMass = round(($bodyFatPercentage * $body_fat_weight / 100), 1);
                         $leanBodyMass = round(($body_fat_weight - $bodyFatMass), 1);
             
                         if($male){
-                            if($db->write("UPDATE daily_body_weight SET thigh = ?, chest = ?, abdomen = ?, weight = ?, percentage = ?, body_fat_mass = ?, lean_body_mass = ?, date_calculated = ? WHERE id = ?", [$edit_thigh, $edit_chest, $edit_abdomen, $edit_body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $edit_date_calculated, $id])){
+                            if($db->write("UPDATE daily_body_fat SET thigh = ?, chest = ?, abdomen = ?, weight = ?, percentage = ?, body_fat_mass = ?, lean_body_mass = ?, date_calculated = ? WHERE id = ?", [$edit_thigh, $edit_chest, $edit_abdomen, $edit_body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $edit_date_calculated, $id])){
                                 $_SESSION["edit-success"] = "Successfully updated!";
                                 header("Location: {$_SESSION["home"]}");
                             }else{
@@ -261,7 +261,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                                 echo "<script>alert('Something went wrong while trying to update the entry');</script>";
                             }
                         }elseif($female){
-                            if($db->write("UPDATE daily_body_weight SET thigh = ?, triceps = ?, suprailiac = ?, weight = ?, percentage = ?, body_fat_mass = ?, lean_body_mass = ?, date_calculated = ? WHERE id = ?", [$edit_thigh, $edit_triceps, $edit_suprailiac, $edit_body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $edit_date_calculated, $id])){
+                            if($db->write("UPDATE daily_body_fat SET thigh = ?, triceps = ?, suprailiac = ?, weight = ?, percentage = ?, body_fat_mass = ?, lean_body_mass = ?, date_calculated = ? WHERE id = ?", [$edit_thigh, $edit_triceps, $edit_suprailiac, $edit_body_fat_weight, $bodyFatPercentage, $bodyFatMass, $leanBodyMass, $edit_date_calculated, $id])){
                                 $_SESSION["edit-success"] = "Successfully updated!";
                                 header("Location: {$_SESSION["home"]}");
                             }else{

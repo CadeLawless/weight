@@ -106,50 +106,6 @@ class Pagination {
                     </div>
                     </div>
                     <div>
-                    <div class='body-fat-percentage'>
-                        <a class='body-fat-button popup-button'>Calculate Body Fat Percentage</a>
-                    </div>";
-                    if($bodyFatDiv != "") echo $bodyFatDiv;
-                    echo "
-                    <div class = 'flex hidden popup-container'>
-                        <div class = 'popup flex' id='body-fat-popup'>
-                            <div class='close-container'>
-                                <img src='images/close.png' class='close-button'>
-                            </div>
-                            <div style='overflow: auto;'>
-                                <h3 style='text-align: center'>Body Fat Percentage Calculator</h3><br />
-                                <form id='body-fat-form' method='POST' action=''>
-                                    <label>Gender: <br></label>
-                                    <select name='gender' onChange='showGender.call(this)'>
-                                        <option selected disabled>Select an option</option>
-                                        <option value='male'>Male</option>
-                                        <option value='female'>Female</option>
-                                    </select><br><br>
-                                    <div id='restOfForm' style='display: none'>
-                                        <label>Age: <br></label>
-                                        <input type='text' inputmode='numeric' name='age' step='any'><br><br>
-                                        <label>Weight: <br></label>
-                                        <input type='text' inputmode='decimal' name='body-fat-weight'> <span>lbs</span><br><br>
-                                        <label>Thigh: <br></label>
-                                        <input type='text' inputmode='decimal' name='thigh'> <span>mm</span><br><br>
-                                        <div id='male' style='display: none'>
-                                            <label>Chest: <br></label>
-                                            <input type='text' inputmode='decimal' name='chest'> <span>mm</span><br><br>
-                                            <label>Abdomen: <br></label>
-                                            <input type='text' inputmode='decimal' name='abdomen'> <span>mm</span><br><br>
-                                        </div>
-                                        <div id='female' style='display: none'>
-                                            <label>Triceps: <br></label>
-                                            <input type='text' inputmode='decimal' name='triceps'> <span>mm</span><br><br>
-                                            <label>Suprailiac: <br></label>
-                                            <input type='text' inputmode='decimal' name='suprailiac'> <span>mm</span><br><br>
-                                        </div>
-                                        <p align='center'><input type='submit' id='body-fat-submit' name='body-fat-submit' value='Calculate'></p>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                     <div class='desktop-flex-row'>
                     <div class='button-wrapper desktop-button-wrapper'>
                     <div class='average-container circle-container confetti-button'>
@@ -195,7 +151,7 @@ class Pagination {
                     </div>
                     </div>
                     <div class='history'>
-                        <h2 id='weight-history-title' align='center'>Weight History</h2>
+                        <h2 id='weight-history-title' style='text-align: center; margin-top:0;'>Weight History</h2>
                         <div id='table'>
                             <table>
                                 <thead>
@@ -208,7 +164,7 @@ class Pagination {
                                 </thead>
                             </table>";
                     while($row=$selectQuery->fetch_assoc()){
-                        $dateWeighed = htmlspecialchars(date("m/d/y", strtotime($row["date_weighed"])));
+                        $dateWeighed = htmlspecialchars(date("n/j/y", strtotime($row["date_weighed"])));
                         $weight = htmlspecialchars($row["pounds"]);
                         $id = htmlspecialchars($row["id"]);
                         echo "
@@ -471,11 +427,13 @@ class Pagination {
                                                             <span>Date Calculated: $date_calculated</span><br />
                                                             <span>Thigh: $thigh mm</span><br />";
                                                             if($male){
-                                                                echo "                                                            <span>Chest: $chest mm</span><br />
+                                                                echo "                                                            
+                                                                <span>Chest: $chest mm</span><br />
                                                                 <span>Abdomen: $abdomen mm</span><br />";
                                                             }
                                                             if($female){
-                                                                echo "                                                            <span>Triceps: $triceps mm</span><br />
+                                                                echo "                                                            
+                                                                <span>Triceps: $triceps mm</span><br />
                                                                 <span>Suprailiac: $suprailiac mm</span><br />";
                                                             }
                                                             echo "
