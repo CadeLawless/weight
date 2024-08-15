@@ -8,7 +8,7 @@ $db = new DB();
 $weight = new Weight($db);
 
 // check if logged in
-if(!isset($_SESSION["logged_in"])){
+if(!isset($_SESSION["weight_logged_in"])){
     if(isset($_COOKIE["session_id"])){
         $session = $_COOKIE["session_id"];
         $findUser = $db->select("SELECT username, session_expiration FROM users WHERE session = ?", [$session]);
@@ -17,7 +17,7 @@ if(!isset($_SESSION["logged_in"])){
                 $session_expiration = $row["session_expiration"];
                 if(date("Y-m-d H:i:s") < $session_expiration){
                     $username = $row["username"];
-                    $_SESSION["logged_in"] = true;
+                    $_SESSION["weight_logged_in"] = true;
                     $_SESSION["username"] = $username;
                 }else{
                     header("Location: login.php");

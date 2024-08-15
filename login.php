@@ -58,7 +58,7 @@ if(isset($_POST["submit_button"])){
                     if($db->write("UPDATE users SET session = ?, session_expiration = ? WHERE username = ?", [session_id(), $expire_date, $username])){
                         $cookie_time = (3600 * 24 * 365); // 1 year
                         setcookie("session_id", session_id(), time() + $cookie_time);
-                        $_SESSION["logged_in"] = true;
+                        $_SESSION["weight_logged_in"] = true;
                         $_SESSION["username"] = $username;
                         header("Location: index.php");
                     }

@@ -95,7 +95,7 @@ if(isset($_POST["submit_button"])){
         if($db->write("INSERT INTO users (fname, lname, email, gender, date_of_birth, username, password, session, session_expiration) VALUES(?,?,?,?,?,?,?,?,?)", [$fname, $lname, $email, $gender, $date_of_birth, $username, $hashed_password, session_id(), $expire_date])){
             $cookie_time = (3600 * 24 * 365); // 1 year
             setcookie("session_id", session_id(), time() + $cookie_time);
-            $_SESSION["logged_in"] = true;
+            $_SESSION["weight_logged_in"] = true;
             $_SESSION["username"] = $username;
             header("Location: index.php");
         }else{

@@ -9,7 +9,7 @@ $db = new DB();
 $weight = new Weight($db);
 
 // check if logged in
-if(!isset($_SESSION["logged_in"])){
+if(!isset($_SESSION["weight_logged_in"])){
     // check if IP address is associated with a user 
     if(isset($_COOKIE["session_id"])){
         $session = $_COOKIE["session_id"];
@@ -24,7 +24,7 @@ if(!isset($_SESSION["logged_in"])){
                     $gender = $row["gender"];
                     $male = $gender == "Male" ? true : false;
                     $female = $gender == "Female" ? true : false;
-                    $_SESSION["logged_in"] = true;
+                    $_SESSION["weight_logged_in"] = true;
                     $_SESSION["username"] = $username;
                 }else{
                     header("Location: login.php");
